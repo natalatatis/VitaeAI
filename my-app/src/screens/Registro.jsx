@@ -77,7 +77,7 @@ export default function RegistroPage() {
 
           <Box sx={{ textAlign: "right" }}>
             <Link
-              href="#"
+              href="/login"
               underline="hover"
               sx={{ color: theme.palette.secondary.main, fontSize: "0.85rem" }}
             >

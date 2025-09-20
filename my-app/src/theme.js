@@ -3,6 +3,10 @@
 import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
+    typography: {
+    fontFamily: "'Manrope', sans-serif",
+  },
+  
   palette: {
     primary: {
       main: '#49769f', // dark navy

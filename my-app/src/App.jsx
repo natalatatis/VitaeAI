@@ -6,6 +6,7 @@ import theme from "./theme";
 import LoginPage from "./screens/Login";
 import RegistroPage from "./screens/Registro";
 import LandingPage from "./screens/Landing";
+import Wizard from "./components/Wizard";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/wizard" element={<Wizard />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/registro" element={<RegistroPage />} />
         </Routes>

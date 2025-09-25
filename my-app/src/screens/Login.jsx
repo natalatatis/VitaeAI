@@ -1,8 +1,16 @@
 // src/screens/LoginPage.jsx
 import React from "react";
-import { Box, Button, TextField, Typography, Link } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Link,
+  IconButton,
+} from "@mui/material";
 import theme from "../theme";
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from "react-router-dom";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 export default function LoginPage() {
   return (
@@ -20,9 +28,17 @@ export default function LoginPage() {
           width: 500,
           padding: 6,
           backgroundColor: "#fff",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.15)", // subtle modern shadow
+          boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
         }}
       >
+        <IconButton
+          component={RouterLink}
+          to="/"
+          sx={{ mb: 2, color: "black" }}
+        >
+          <ArrowBackIcon />
+        </IconButton>
+
         <Typography
           variant="h4"
           component="h1"
@@ -42,11 +58,7 @@ export default function LoginPage() {
             gap: 3,
           }}
         >
-          <TextField
-            label="Usuario"
-            variant="outlined"
-            fullWidth
-          />
+          <TextField label="Usuario" variant="outlined" fullWidth />
 
           <TextField
             label="Contraseña"

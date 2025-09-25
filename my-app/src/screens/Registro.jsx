@@ -1,7 +1,16 @@
-// src/screens/LoginPage.jsx
+// src/screens/RegistroPage.jsx
 import React from "react";
-import { Box, Button, TextField, Typography, Link } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Link,
+  IconButton,
+} from "@mui/material";
 import theme from "../theme";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Link as RouterLink } from "react-router-dom";
 
 export default function RegistroPage() {
   return (
@@ -22,6 +31,14 @@ export default function RegistroPage() {
           boxShadow: "0 8px 24px rgba(0,0,0,0.15)", // subtle modern shadow
         }}
       >
+        <IconButton
+          component={RouterLink}
+          to="/"
+          sx={{ mb: 2, color: "black" }}
+        >
+          <ArrowBackIcon />
+        </IconButton>
+
         <Typography
           variant="h4"
           component="h1"
@@ -41,27 +58,13 @@ export default function RegistroPage() {
             gap: 3,
           }}
         >
-          <TextField
-            label="Nombre"
-            variant="outlined"
-            fullWidth
-          />
+          <TextField label="Nombre" variant="outlined" fullWidth />
+
+          <TextField label="Apellidos" variant="outlined" fullWidth />
+
+          <TextField label="Correo Electrónico" variant="outlined" fullWidth />
 
           <TextField
-            label="Apellidos"
-            type="password"
-            variant="outlined"
-            fullWidth
-          />
-
-           <TextField
-            label="Correo Electrónico"
-            type="password"
-            variant="outlined"
-            fullWidth
-          />
-
-           <TextField
             label="Contraseña"
             type="password"
             variant="outlined"
@@ -77,11 +80,12 @@ export default function RegistroPage() {
 
           <Box sx={{ textAlign: "right" }}>
             <Link
-              href="/login"
+              component={RouterLink}
+              to="/login"
               underline="hover"
               sx={{ color: theme.palette.secondary.main, fontSize: "0.85rem" }}
             >
-              Ya tienes una cuenta? Presiona aquí
+              ¿Ya tienes una cuenta? Presiona aquí
             </Link>
           </Box>
 

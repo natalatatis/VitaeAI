@@ -10,9 +10,46 @@ import {
 } from "@mui/material";
 import theme from "../theme";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import {useState} from "react";
 
 export default function RegistroPage() {
+  //Datos del usuario
+  const[nombre, setNombre] = useState(""); 
+  const[apellido, setApellido] = useState(""); 
+  const[correo, setCorreo] = useState(""); 
+  const[password, setPassword] = useState(""); 
+  const[confirmPassword, setConfirmPassword] = useState("");
+  const navigate = useNavigate();
+
+  //Función para manejar el registro
+  const handleSubmit = async (e) => {
+    if (password !== confirmPassword) {
+      alert("Las contraseñas no coinciden");
+      return;
+    }
+try {
+      const res = await fetch("http://localhost:3001/usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, apellido, correo, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(`Usuario ${data.nombre} creado con éxito`);
+        navigate("/login"); // redirige al login
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al crear usuario");
+    }
+  };
+
+
   return (
     <Box
       sx={{
@@ -58,17 +95,37 @@ export default function RegistroPage() {
             gap: 3,
           }}
         >
-          <TextField label="Nombre" variant="outlined" fullWidth />
+          <TextField label="Nombre" 
+          variant="outlined" 
+          fullWidth 
+          value={nombre}
+           onChange={(e) => setNombre(e.target.value)} 
+           required />
 
-          <TextField label="Apellidos" variant="outlined" fullWidth />
+          <TextField 
+          label="Apellido" 
+          variant="outlined" 
+          fullWidth 
+          value={apellido}
+           onChange={(e) => setApellido(e.target.value)}
+            required />
 
-          <TextField label="Correo Electrónico" variant="outlined" fullWidth />
+          <TextField
+           label="Correo Electrónico" 
+           variant="outlined"
+            fullWidth 
+            value={correo} 
+            onChange={(e) => setCorreo(e.target.value)} 
+            required />
 
           <TextField
             label="Contraseña"
             type="password"
             variant="outlined"
             fullWidth
+            value={password}
+             onChange={(e) => setPassword(e.target.value)} 
+             required
           />
 
           <TextField
@@ -76,6 +133,9 @@ export default function RegistroPage() {
             type="password"
             variant="outlined"
             fullWidth
+            value={confirmPassword}
+             onChange={(e) => setConfirmPassword(e.target.value)} 
+             required
           />
 
           <Box sx={{ textAlign: "right" }}>
@@ -99,6 +159,7 @@ export default function RegistroPage() {
                 backgroundColor: theme.palette.secondary.dark,
               },
             }}
+            onClick={handleSubmit}
           >
             Registrar
           </Button>

@@ -11,8 +11,11 @@ import {
 import theme from "../theme";
 import { Link as RouterLink } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import {useState} from "react";
 
 export default function LoginPage() {
+  //const [usuario, setUsuario] = useState("");
+  //const [password, setPassword] = useState("");
   return (
     <Box
       sx={{

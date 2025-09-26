@@ -112,7 +112,7 @@ export default function LandingPage() {
           <Grid item xs={12} md={6}>
             <Box
               component="img"
-              src="/src/images/image.png"
+              src="/frontend/src/images/image.png"
               alt="Ilustración CV"
               sx={{
                 width: "100%",

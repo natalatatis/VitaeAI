@@ -18,7 +18,7 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import DownloadIcon from "@mui/icons-material/Download";
-import EditIcon from '@mui/icons-material/Edit';
+import EditIcon from "@mui/icons-material/Edit";
 import { useNavigate } from "react-router-dom";
 
 export default function LandingPage() {
@@ -27,227 +27,323 @@ export default function LandingPage() {
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: "#fff" }}>
       {/* HEADER */}
-      <AppBar position="static" sx={{ backgroundColor: theme.palette.primary.main }}>
+      <AppBar
+        position="static"
+        sx={{ backgroundColor: theme.palette.primary.main }}
+      >
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Typography variant="h6" fontWeight="bold">VitaeAI</Typography>
+          <Typography variant="h6" fontWeight="bold">
+            VitaeAI
+          </Typography>
           <Box>
-            <Button color="inherit" href="/login">Login</Button>
-            <Button color="inherit" href="/registro">Registro</Button>
+            <Button color="inherit" href="/login">
+              Login
+            </Button>
+            <Button color="inherit" href="/registro">
+              Registro
+            </Button>
           </Box>
         </Toolbar>
       </AppBar>
 
-
-{/* HERO SECTION */}
-<Container sx={{ py: 8 }}>
-  <Grid
-    container
-    spacing={6}
-    sx={{
-      display: "flex",
-      alignItems: { xs: "center", md: "center" }, // vertical alignment
-      justifyContent: { xs: "center", md: "space-between" }, // horizontal alignment
-      textAlign: { xs: "center", md: "left" }, // center text on small screens
-    }}
-  >
-    
-    {/* TEXTO */}
-    <Grid item xs={12} md={6}>
-      <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
-        <Typography variant="h3" fontWeight="bold" gutterBottom>
-          Con <span style={{ color: theme.palette.primary.main }}>VitaeAI</span> creas tu <br />
-          curriculum en minutos.
-        </Typography>
-
-        <Typography variant="h6" color="text.secondary" gutterBottom>
-          Simple. Rápido. Efectivo
-          </Typography>
-
-        <Button
-          variant="contained"
-          size="large"
-          onClick={() => navigate("/wizard")}
+      {/* HERO SECTION */}
+      <Container sx={{ py: 8 }}>
+        <Grid
+          container
+          spacing={6}
           sx={{
-            mt: 4,
-            px: 5,
-            py: 1.5,
-            fontWeight: "bold",
-            fontSize: "1.1rem",
-            color: "#fff",
-            background: `linear-gradient(45deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
-            boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-            borderRadius: "12px",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              transform: "scale(1.05)",
-              boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
-            },
+            display: "flex",
+            alignItems: { xs: "center", md: "center" }, // vertical alignment
+            justifyContent: { xs: "center", md: "space-between" }, // horizontal alignment
+            textAlign: { xs: "center", md: "left" }, // center text on small screens
           }}
         >
-          Hacer mi curriculum
-        </Button>
-      </Box>
-    </Grid>
+          {/* TEXTO */}
+          <Grid item xs={12} md={6}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                height: "100%",
+              }}
+            >
+              <Typography variant="h3" fontWeight="bold" gutterBottom>
+                Con{" "}
+                <span style={{ color: theme.palette.primary.main }}>
+                  VitaeAI
+                </span>{" "}
+                creas tu <br />
+                curriculum en minutos.
+              </Typography>
 
-    {/* IMAGEN */}
-    <Grid item xs={12} md={6}>
-      <Box
-        component="img"
-        src="/src/images/image.png"
-        alt="Ilustración CV"
-        sx={{
-          width: "100%",
-          maxWidth: 500,
-          maxHeight: 400,
-          objectFit: "contain",
-          display: "block",
-          marginLeft: { xs: "auto", md: "0" },
-          marginRight: { xs: "auto", md: "0" },
-        }}
-      />
-    </Grid>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Simple. Rápido. Efectivo
+              </Typography>
 
-  </Grid>
-</Container>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={() => navigate("/wizard")}
+                sx={{
+                  mt: 4,
+                  px: 5,
+                  py: 1.5,
+                  fontWeight: "bold",
+                  fontSize: "1.1rem",
+                  color: "#fff",
+                  background: `linear-gradient(45deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+                  boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                  borderRadius: "12px",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    transform: "scale(1.05)",
+                    boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
+                  },
+                }}
+              >
+                Hacer mi curriculum
+              </Button>
+            </Box>
+          </Grid>
 
-
-
-{/* Cómo funciona */}
-<Box sx={{ py: 8,  backgroundColor: "#f9f9f9" }}>
-  <Container>
-    <Typography variant="h4" fontWeight="bold" textAlign="center" gutterBottom>
-      Cómo funciona
-    </Typography>
-
-    <Grid container spacing={4} justifyContent="center" sx={{ mt: 4 }}>
-      {[
-        {
-          icon: <AccountCircleIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
-          title: "1. Ingresa tu info",
-          desc: "Agrega tus datos, experiencia y educación en un formulario sencillo.",
-        },
-        {
-          icon: <RocketLaunchIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
-          title: "2. Genera tu CV",
-          desc: "La IA convierte tu información en un CV profesional en segundos.",
-        },
-        {
-          icon: <EditIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
-          title: "3. Ajusta a tu gusto",
-          desc: "Puedes modificar tu CV para que se ajuste aún más a lo que buscas.",
-        },
-        {
-          icon: <DownloadIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />,
-          title: "4. Descarga y aplica",
-          desc: "Exporta tu CV en PDF y comienza a postular a tus empleos ideales.",
-        },
-      ].map((step, i) => (
-        <Grid item xs={12} sm={6} md={6} key={i}>
-          <Paper
-            elevation={3}
-            sx={{
-              p: 3,
-              textAlign: "center",
-              transition: "transform 0.3s",
-              "&:hover": { transform: "translateY(-10px)" },
-            }}
-          >
-            {step.icon}
-            <Typography variant="h6" fontWeight="bold" mt={2}>
-              {step.title}
-            </Typography>
-            <Typography color="text.secondary">{step.desc}</Typography>
-          </Paper>
+          {/* IMAGEN */}
+          <Grid item xs={12} md={6}>
+            <Box
+              component="img"
+              src="/src/images/image.png"
+              alt="Ilustración CV"
+              sx={{
+                width: "100%",
+                maxWidth: 500,
+                maxHeight: 400,
+                objectFit: "contain",
+                display: "block",
+                marginLeft: { xs: "auto", md: "0" },
+                marginRight: { xs: "auto", md: "0" },
+              }}
+            />
+          </Grid>
         </Grid>
-      ))}
-    </Grid>
-  {/* CTA REPETIDO */}
-          <Box textAlign="center" mt={6}>
-            <Button
-             variant="contained"
-            size="large"
-             sx={{
-            mt: 4,
-            px: 5, // más ancho
-            py: 1.5, // más alto
-            fontWeight: "bold",
-            fontSize: "1.1rem",
-            color: "#fff",
-            background: `linear-gradient(45deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
-            boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-            borderRadius: "12px",
-            transition: "all 0.3s ease",
-            "&:hover": {
-            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            transform: "scale(1.05)",
-            boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
-            },
-            }}
-            >              Hacer mi CV ahora
-            </Button>
-          </Box>
-  </Container>
-</Box>
+      </Container>
 
-      {/* FEATURES */}
-      <Box sx={{ py: 6}}>
+      {/* Cómo funciona */}
+      <Box sx={{ py: 8, backgroundColor: "#f9f9f9" }}>
         <Container>
-          <Typography variant="h4" fontWeight="bold" textAlign="center" gutterBottom>
-            ¿Por qué usar VitaeAI?
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            textAlign="center"
+            gutterBottom
+          >
+            Cómo funciona
           </Typography>
+
           <Grid container spacing={4} justifyContent="center" sx={{ mt: 4 }}>
             {[
-                { icon: <DescriptionIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />, title: "Plantillas profesionales", desc: "Diseños modernos adaptados a lo que buscan los reclutadores." },
-                { icon: <PsychologyIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />, title: "Inteligencia Artificial", desc: "Tu experiencia se transforma en un CV optimizado en segundos." },
-                { icon: <CheckCircleIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />, title: "Fácil de usar", desc: "No necesitas conocimientos de diseño, todo es paso a paso." },
-                { icon: <PictureAsPdfIcon sx={{ fontSize: 50, color: theme.palette.primary.main }} />, title: "Listo para descargar", desc: "Exporta en PDF y empieza a aplicar de inmediato." },
-            ].map((feature, i) => (
-                <Grid item xs={12} sm={6} md={6} key={i}>
-                <Paper 
-                    elevation={3} 
-                    sx={{ p: 3, textAlign: "center", transition: "transform 0.3s", "&:hover": { transform: "translateY(-10px)" } }}
+              {
+                icon: (
+                  <AccountCircleIcon
+                    sx={{ fontSize: 50, color: theme.palette.primary.main }}
+                  />
+                ),
+                title: "1. Ingresa tu info",
+                desc: "Agrega tus datos, experiencia y educación en un formulario sencillo.",
+              },
+              {
+                icon: (
+                  <RocketLaunchIcon
+                    sx={{
+                      fontSize: 50,
+                      color: theme.palette.accentPurple.main,
+                    }}
+                  />
+                ),
+                title: "2. Genera tu CV",
+                desc: "La IA convierte tu información en un CV profesional en segundos.",
+              },
+              {
+                icon: (
+                  <EditIcon
+                    sx={{
+                      fontSize: 50,
+                      color: theme.palette.accentOrange.main,
+                    }}
+                  />
+                ),
+                title: "3. Ajusta a tu gusto",
+                desc: "Puedes modificar tu CV para que se ajuste aún más a lo que buscas.",
+              },
+              {
+                icon: (
+                  <DownloadIcon
+                    sx={{ fontSize: 50, color: theme.palette.accentGreen.main }}
+                  />
+                ),
+                title: "4. Descarga y aplica",
+                desc: "Exporta tu CV en PDF y comienza a postular a tus empleos ideales.",
+              },
+            ].map((step, i) => (
+              <Grid item xs={12} sm={6} md={6} key={i}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 3,
+                    textAlign: "center",
+                    transition: "transform 0.3s",
+                    "&:hover": { transform: "translateY(-10px)" },
+                  }}
                 >
-                    {feature.icon}
-                    <Typography variant="h6" fontWeight="bold" mt={2}>{feature.title}</Typography>
-                    <Typography color="text.secondary">{feature.desc}</Typography>
+                  {step.icon}
+                  <Typography variant="h6" fontWeight="bold" mt={2}>
+                    {step.title}
+                  </Typography>
+                  <Typography color="text.secondary">{step.desc}</Typography>
                 </Paper>
-                </Grid>
+              </Grid>
             ))}
-        </Grid>
-
-
+          </Grid>
           {/* CTA REPETIDO */}
           <Box textAlign="center" mt={6}>
             <Button
-             variant="contained"
-            size="large"
-             sx={{
-            mt: 4,
-            px: 5, // más ancho
-            py: 1.5, // más alto
-            fontWeight: "bold",
-            fontSize: "1.1rem",
-            color: "#fff",
-            background: `linear-gradient(45deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
-            boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-            borderRadius: "12px",
-            transition: "all 0.3s ease",
-            "&:hover": {
-            background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            transform: "scale(1.05)",
-            boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
-            },
-            }}
-            >              Comenzar ahora
+              variant="contained"
+              size="large"
+              onClick={() => navigate("/wizard")}
+              sx={{
+                mt: 4,
+                px: 5, // más ancho
+                py: 1.5, // más alto
+                fontWeight: "bold",
+                fontSize: "1.1rem",
+                color: "#fff",
+                background: `linear-gradient(45deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+                boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                borderRadius: "12px",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  transform: "scale(1.05)",
+                  boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
+                },
+              }}
+            >
+              {" "}
+              Hacer mi CV ahora
             </Button>
           </Box>
         </Container>
       </Box>
 
+      {/* FEATURES */}
+      <Box sx={{ py: 6 }}>
+        <Container>
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            textAlign="center"
+            gutterBottom
+          >
+            ¿Por qué usar VitaeAI?
+          </Typography>
+          <Grid container spacing={4} justifyContent="center" sx={{ mt: 4 }}>
+            {[
+              {
+                icon: (
+                  <DescriptionIcon
+                    sx={{
+                      fontSize: 50,
+                      color: theme.palette.accentOrange.main,
+                    }}
+                  />
+                ),
+                title: "Plantillas profesionales",
+                desc: "Diseños modernos adaptados a lo que buscan los reclutadores.",
+              },
+              {
+                icon: (
+                  <PsychologyIcon
+                    sx={{
+                      fontSize: 50,
+                      color: theme.palette.accentPurple.main,
+                    }}
+                  />
+                ),
+                title: "Inteligencia Artificial",
+                desc: "Tu experiencia se transforma en un CV optimizado en segundos.",
+              },
+              {
+                icon: (
+                  <CheckCircleIcon
+                    sx={{ fontSize: 50, color: theme.palette.accentGreen.main }}
+                  />
+                ),
+                title: "Fácil de usar",
+                desc: "No necesitas conocimientos de diseño, todo es paso a paso.",
+              },
+              {
+                icon: (
+                  <PictureAsPdfIcon
+                    sx={{
+                      fontSize: 50,
+                      color: theme.palette.accentRed.main,
+                    }}
+                  />
+                ),
+                title: "Listo para descargar",
+                desc: "Exporta en PDF y empieza a aplicar de inmediato.",
+              },
+            ].map((feature, i) => (
+              <Grid item xs={12} sm={6} md={6} key={i}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 3,
+                    textAlign: "center",
+                    transition: "transform 0.3s",
+                    "&:hover": { transform: "translateY(-10px)" },
+                  }}
+                >
+                  {feature.icon}
+                  <Typography variant="h6" fontWeight="bold" mt={2}>
+                    {feature.title}
+                  </Typography>
+                  <Typography color="text.secondary">{feature.desc}</Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
 
-
-
+          {/* CTA REPETIDO */}
+          <Box textAlign="center" mt={6}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate("/wizard")}
+              sx={{
+                mt: 4,
+                px: 5, // más ancho
+                py: 1.5, // más alto
+                fontWeight: "bold",
+                fontSize: "1.1rem",
+                color: "#fff",
+                background: `linear-gradient(45deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+                boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                borderRadius: "12px",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  transform: "scale(1.05)",
+                  boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
+                },
+              }}
+            >
+              {" "}
+              Comenzar ahora
+            </Button>
+          </Box>
+        </Container>
+      </Box>
     </Box>
   );
 }

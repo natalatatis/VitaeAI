@@ -11,7 +11,7 @@ export default function Step1PersonalInfo({ formData, setFormData, errors }) {
   return(
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: "60vh",
         display: "flex",
         mt: 1,
         alignItems: "center",
@@ -22,45 +22,32 @@ export default function Step1PersonalInfo({ formData, setFormData, errors }) {
       <Box
         sx={{
           width: 500,
-          padding: 6,
+          padding: 4, 
           backgroundColor: "#fff",
           borderRadius: 2,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.15)", 
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)", 
         }}
       >
-    <Typography variant="h5" gutterBottom mb={3} textAlign={"left"}>
-      Dime tu <Typography variant="h5" gutterBottom mb={3} textAlign={"center"} fontWeight={"bold"}>nombre completo, ciudad, número de teléfono y tu correo electrónico </Typography>
-    </Typography>
-    
-    <Grid container spacing={3} sx={{ mt: 1}} alignContent={"center"}>  
-        <Grid item xs={12} sm={6}>
-            <TextField label="Nombre" name="nombre" value={formData.nombre} onChange={handleChange} fullWidth required />
+        <Typography variant="h5" gutterBottom mb={3} textAlign={"left"}>
+            Dime tu <Typography component="span" variant="h5" fontWeight={"bold"}>información personal</Typography>
+        </Typography>
+        
+        <Grid container spacing={3}> 
+            <Grid item xs={12} sm={6}>
+                <TextField label="Nombre" name="nombre" value={formData.nombre} onChange={handleChange} fullWidth required />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth required />
+            </Grid>
+            <Grid item xs={12} sm={6} >
+                <TextField label="Telefono" name="telefono" value={formData.telefono} onChange={handleChange} fullWidth required />
+            </Grid>
+            <Grid item xs={12} sm={6} >
+                <TextField label="Ciudad" name="ciudad" value={formData.ciudad} onChange={handleChange} fullWidth required />
+            </Grid>
         </Grid>
-    </Grid>
 
-    <Grid container spacing={3} sx={{ mt: 1}}>  
-        <Grid item xs={12} sm={6}>
-            <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth required />
-        </Grid>
-    </Grid>
-
-    <Grid container spacing={3} sx={{ mt: 1}}>  
-        <Grid item xs={12} sm={6} >
-            <TextField label="Telefono" name="telefono" value={formData.telefono} onChange={handleChange} fullWidth required />
-        </Grid>
-    </Grid>
-
-    <Grid container spacing={3} sx={{ mt: 1}}>  
-        <Grid item xs={12} sm={6} >
-            <TextField label="Ciudad" name="ciudad" value={formData.ciudad} onChange={handleChange} fullWidth required />
-        </Grid>
-    </Grid>
-
-
+      </Box>
     </Box>
-
-    </Box>
-
   )
-
-  };
+};

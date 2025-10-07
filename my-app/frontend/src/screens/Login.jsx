@@ -1,5 +1,5 @@
 // src/screens/LoginPage.jsx
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -9,13 +9,37 @@ import {
   IconButton,
 } from "@mui/material";
 import theme from "../theme";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import {useState} from "react";
 
 export default function LoginPage() {
-  //const [usuario, setUsuario] = useState("");
-  //const [password, setPassword] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [contrasenia, setContrasenia] = useState("");
+
+  const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    try {
+      const res = await fetch("http://localhost:3001/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo, contrasenia }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(`Bienvenido ${data.usuario.nombre}`);
+        navigate("/profile"); 
+      } else {
+        alert(data.message || "Correo o contraseña incorrectos");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al iniciar sesión");
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -53,43 +77,46 @@ export default function LoginPage() {
           Iniciar Sesión
         </Typography>
 
-        <Box
-          component="form"
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 3,
-          }}
-        >
-          <TextField label="Usuario" variant="outlined" fullWidth />
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <TextField
+            label="Correo Electrónico"
+            variant="outlined"
+            fullWidth
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            required
+          />
 
           <TextField
             label="Contraseña"
             type="password"
             variant="outlined"
             fullWidth
+            value={contrasenia}
+            onChange={(e) => setContrasenia(e.target.value)}
+            required
           />
 
           <Box sx={{ textAlign: "right" }}>
             <Link
-              href="#"
+              component={RouterLink}
+              to="/"
               underline="hover"
               sx={{ color: theme.palette.secondary.main, fontSize: "0.85rem" }}
             >
-              Olvidé mi contraseña
+              ¿Olvidaste tu contraseña?
             </Link>
           </Box>
 
           <Button
-            type="submit"
+            type="button"
             variant="contained"
             sx={{
               backgroundColor: theme.palette.primary.main,
               color: "#fff",
-              "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
-              },
+              "&:hover": { backgroundColor: theme.palette.primary.dark },
             }}
+            onClick={handleLogin}
           >
             Iniciar Sesión
           </Button>
@@ -101,9 +128,7 @@ export default function LoginPage() {
             sx={{
               backgroundColor: theme.palette.secondary.main,
               color: "#fff",
-              "&:hover": {
-                backgroundColor: theme.palette.secondary.dark,
-              },
+              "&:hover": { backgroundColor: theme.palette.secondary.dark },
             }}
           >
             Registrar

@@ -19,6 +19,7 @@ import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import DownloadIcon from "@mui/icons-material/Download";
 import EditIcon from "@mui/icons-material/Edit";
+import Header from "../components/Header";
 import { useNavigate } from "react-router-dom";
 
 export default function LandingPage() {
@@ -26,26 +27,7 @@ export default function LandingPage() {
 
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: "#fff" }}>
-      {/* HEADER */}
-      <AppBar
-        position="static"
-        sx={{ backgroundColor: theme.palette.primary.main }}
-      >
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-          <Typography variant="h6" fontWeight="bold">
-            VitaeAI
-          </Typography>
-          <Box>
-            <Button color="inherit" href="/login">
-              Login
-            </Button>
-            <Button color="inherit" href="/registro">
-              Registro
-            </Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
+      <Header />
       {/* HERO SECTION */}
       <Container sx={{ py: 8 }}>
         <Grid

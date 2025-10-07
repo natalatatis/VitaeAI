@@ -1,5 +1,5 @@
 // src/screens/RegistroPage.jsx
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -11,35 +11,39 @@ import {
 import theme from "../theme";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import {useState} from "react";
 
 export default function RegistroPage() {
-  //Datos del usuario
-  const[nombre, setNombre] = useState(""); 
-  const[apellido, setApellido] = useState(""); 
-  const[correo, setCorreo] = useState(""); 
-  const[password, setPassword] = useState(""); 
-  const[confirmPassword, setConfirmPassword] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const navigate = useNavigate();
 
-  //Función para manejar el registro
-  const handleSubmit = async (e) => {
+  const handleSubmit = async () => {
     if (password !== confirmPassword) {
       alert("Las contraseñas no coinciden");
       return;
     }
-try {
+
+    try {
       const res = await fetch("http://localhost:3001/usuarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, apellido, correo, password }),
+        body: JSON.stringify({
+          nombre,
+          apellido,
+          correo,
+          contrasenia: password, // ⚠ Enviar con el nombre correcto
+        }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
         alert(`Usuario ${data.nombre} creado con éxito`);
-        navigate("/login"); // redirige al login
+        navigate("/login");
       } else {
         alert(`Error: ${data.error}`);
       }
@@ -48,7 +52,6 @@ try {
       alert("Error al crear usuario");
     }
   };
-
 
   return (
     <Box
@@ -65,7 +68,7 @@ try {
           width: 500,
           padding: 6,
           backgroundColor: "#fff",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.15)", // subtle modern shadow
+          boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
         }}
       >
         <IconButton
@@ -88,35 +91,34 @@ try {
         </Typography>
 
         <Box
-          component="form"
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 3,
-          }}
+          sx={{ display: "flex", flexDirection: "column", gap: 3 }}
         >
-          <TextField label="Nombre" 
-          variant="outlined" 
-          fullWidth 
-          value={nombre}
-           onChange={(e) => setNombre(e.target.value)} 
-           required />
-
-          <TextField 
-          label="Apellido" 
-          variant="outlined" 
-          fullWidth 
-          value={apellido}
-           onChange={(e) => setApellido(e.target.value)}
-            required />
+          <TextField
+            label="Nombre"
+            variant="outlined"
+            fullWidth
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            required
+          />
 
           <TextField
-           label="Correo Electrónico" 
-           variant="outlined"
-            fullWidth 
-            value={correo} 
-            onChange={(e) => setCorreo(e.target.value)} 
-            required />
+            label="Apellido"
+            variant="outlined"
+            fullWidth
+            value={apellido}
+            onChange={(e) => setApellido(e.target.value)}
+            required
+          />
+
+          <TextField
+            label="Correo Electrónico"
+            variant="outlined"
+            fullWidth
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            required
+          />
 
           <TextField
             label="Contraseña"
@@ -124,8 +126,8 @@ try {
             variant="outlined"
             fullWidth
             value={password}
-             onChange={(e) => setPassword(e.target.value)} 
-             required
+            onChange={(e) => setPassword(e.target.value)}
+            required
           />
 
           <TextField
@@ -134,8 +136,8 @@ try {
             variant="outlined"
             fullWidth
             value={confirmPassword}
-             onChange={(e) => setConfirmPassword(e.target.value)} 
-             required
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
           />
 
           <Box sx={{ textAlign: "right" }}>
@@ -155,9 +157,7 @@ try {
             sx={{
               backgroundColor: theme.palette.secondary.main,
               color: "#fff",
-              "&:hover": {
-                backgroundColor: theme.palette.secondary.dark,
-              },
+              "&:hover": { backgroundColor: theme.palette.secondary.dark },
             }}
             onClick={handleSubmit}
           >

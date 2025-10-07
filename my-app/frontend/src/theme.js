@@ -3,7 +3,7 @@ import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
   typography: {
-    fontFamily: "'Manrope', sans-serif",
+    fontFamily: '"Manrope", "sans-serif"'
   },
 
   palette: {
@@ -48,10 +48,6 @@ const theme = createTheme({
 
   shape: {
     borderRadius: 12,
-  },
-
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
   },
 });
 

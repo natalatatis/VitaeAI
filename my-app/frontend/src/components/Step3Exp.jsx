@@ -1,11 +1,10 @@
 import React from "react";
 import { TextField, Grid, Typography, Box } from "@mui/material";
 
-export default function Step3Exp({ formData, setFormData, errors }) {
+export default function Step3Exp({ formData, setFormData }) {
   const handleChange = (e) => {
     const { value } = e.target;
 
-    // Guardamos toda la experiencia en un solo campo
     setFormData({
       ...formData,
       experiencia: [{ descripcion: value }],
@@ -26,10 +25,10 @@ export default function Step3Exp({ formData, setFormData, errors }) {
       <Box
         sx={{
           width: 500,
-          padding: 4, 
+          padding: 4,
           backgroundColor: "#fff",
           borderRadius: 2,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)", 
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
         <Typography variant="h5" gutterBottom mb={3} textAlign="center">
@@ -39,7 +38,7 @@ export default function Step3Exp({ formData, setFormData, errors }) {
           </Box>
         </Typography>
 
-        <Grid container spacing={3} sx={{ mt: 1 }} alignContent="center">
+        <Grid container spacing={3}>
           <Grid item xs={12}>
             <TextField
               label="Tu experiencia"
@@ -48,7 +47,7 @@ export default function Step3Exp({ formData, setFormData, errors }) {
               onChange={handleChange}
               fullWidth
               multiline
-              rows={6} // más espacio para escribir
+              rows={6}
               placeholder="Ej: Trabajé 2 años como desarrollador web en XYZ Company, gestionando proyectos de frontend y backend..."
               required
             />

@@ -1,14 +1,11 @@
 import React from "react";
 import { TextField, Grid, Typography, Box } from "@mui/material";
 
-export default function Step5Skills({ formData, setFormData, errors }) {
+export default function Step5Skills({ formData, setFormData }) {
   const handleChange = (e) => {
-    const { value } = e.target;
-
-    // Guardamos todas las habilidades en un solo campo
     setFormData({
       ...formData,
-      habilidades: [value],
+      habilidades: [e.target.value],
     });
   };
 
@@ -26,10 +23,10 @@ export default function Step5Skills({ formData, setFormData, errors }) {
       <Box
         sx={{
           width: 500,
-          padding: 4, 
+          padding: 4,
           backgroundColor: "#fff",
           borderRadius: 2,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.1)", 
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
         <Typography variant="h5" gutterBottom mb={3} textAlign="center">
@@ -39,7 +36,7 @@ export default function Step5Skills({ formData, setFormData, errors }) {
           </Box>
         </Typography>
 
-        <Grid container spacing={3} sx={{ mt: 1 }} alignContent="center">
+        <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12}>
             <TextField
               label="Habilidades"

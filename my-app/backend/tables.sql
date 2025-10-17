@@ -61,3 +61,15 @@ CREATE TABLE Idioma (
     estado BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE
 );
+
+CREATE TABLE CvTemporal (
+  id_cv SERIAL PRIMARY KEY,
+  id_usuario INT REFERENCES Usuario(id_usuario) ON DELETE CASCADE,
+  resumen TEXT,
+  acerca_de TEXT,
+  experiencia TEXT,
+  educacion TEXT,
+  habilidades TEXT,
+  idiomas TEXT,
+  estado BOOLEAN DEFAULT TRUE
+);

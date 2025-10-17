@@ -1,4 +1,3 @@
-// src/screens/LandingPage.jsx
 import React from "react";
 import {
   AppBar,
@@ -29,86 +28,100 @@ export default function LandingPage() {
     <Box sx={{ minHeight: "100vh", backgroundColor: "#fff" }}>
       <Header />
       {/* HERO SECTION */}
-      <Container sx={{ py: 8 }}>
-        <Grid
-          container
-          spacing={6}
-          sx={{
-            display: "flex",
-            alignItems: { xs: "center", md: "center" }, // vertical alignment
-            justifyContent: { xs: "center", md: "space-between" }, // horizontal alignment
-            textAlign: { xs: "center", md: "left" }, // center text on small screens
-          }}
-        >
-          {/* TEXTO */}
-          <Grid item xs={12} md={6}>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                height: "100%",
-              }}
-            >
-              <Typography variant="h3" fontWeight="bold" gutterBottom>
-                Con{" "}
-                <span style={{ color: theme.palette.primary.main }}>
-                  VitaeAI
-                </span>{" "}
-                creas tu <br />
-                curriculum en minutos.
-              </Typography>
-
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Simple. Rápido. Efectivo
-              </Typography>
-
-              <Button
-                variant="contained"
-                size="large"
-                onClick={() => navigate("/wizard")}
+      <Box
+        sx={{
+          py: 8,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          // background effect
+          background: `radial-gradient(circle at top, #f0f8ff 0%, #ffffff 70%)`, 
+          borderRadius: '0 0 50px 50px', 
+          boxShadow: '0 5px 15px rgba(0,0,0,0.05)',
+        }}
+      >
+        <Container>
+          <Grid
+            container
+            spacing={6}
+            sx={{
+              display: "flex",
+              alignItems: { xs: "center", md: "center" },
+              justifyContent: { xs: "center", md: "space-between" },
+              textAlign: { xs: "center", md: "left" },
+            }}
+          >
+            {/* TEXTO */}
+            <Grid item xs={12} md={6}>
+              <Box
                 sx={{
-                  mt: 4,
-                  px: 5,
-                  py: 1.5,
-                  fontWeight: "bold",
-                  fontSize: "1.1rem",
-                  color: "#fff",
-                  background: `linear-gradient(45deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-                  borderRadius: "12px",
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                    transform: "scale(1.05)",
-                    boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
-                  },
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  height: "100%",
                 }}
               >
-                Hacer mi curriculum
-              </Button>
-            </Box>
-          </Grid>
+                <Typography variant="h3" fontWeight="bold" gutterBottom>
+                  Con{" "}
+                  <span style={{ color: theme.palette.primary.main }}>
+                    VitaeAI
+                  </span>{" "}
+                  creas tu <br />
+                  curriculum en minutos.
+                </Typography>
 
-          {/* IMAGEN */}
-          <Grid item xs={12} md={6}>
-            <Box
-              component="img"
-              src="/frontend/src/images/image.png"
-              alt="Ilustración CV"
-              sx={{
-                width: "100%",
-                maxWidth: 500,
-                maxHeight: 400,
-                objectFit: "contain",
-                display: "block",
-                marginLeft: { xs: "auto", md: "0" },
-                marginRight: { xs: "auto", md: "0" },
-              }}
-            />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  Simple. Rápido. Efectivo
+                </Typography>
+
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate("/wizard")}
+                  sx={{
+                    mt: 4,
+                    px: 5,
+                    py: 1.5,
+                    fontWeight: "bold",
+                    fontSize: "1.1rem",
+                    color: "#fff",
+                    background: `linear-gradient(45deg, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+                    boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                    borderRadius: "12px",
+                    transition: "all 0.3s ease",
+                    "&:hover": {
+                      background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                      transform: "scale(1.05)",
+                      boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
+                    },
+                  }}
+                >
+                  Hacer mi curriculum
+                </Button>
+              </Box>
+            </Grid>
+
+            {/* IMAGEN */}
+            <Grid item xs={12} md={6}>
+              <Box
+                component="img"
+                src="/frontend/src/images/image.png"
+                alt="Ilustración CV"
+                sx={{
+                  width: "100%",
+                  maxWidth: 500,
+                  maxHeight: 400,
+                  objectFit: "contain",
+                  display: "block",
+                  marginLeft: { xs: "auto", md: "0" },
+                  marginRight: { xs: "auto", md: "0" },
+                }}
+              />
+            </Grid>
           </Grid>
-        </Grid>
-      </Container>
+        </Container>
+      </Box>
+
 
       {/* Cómo funciona */}
       <Box sx={{ py: 8, backgroundColor: "#f9f9f9" }}>

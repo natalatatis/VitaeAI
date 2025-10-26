@@ -1,5 +1,4 @@
-CREATE DATABASE proyecto;
-\c proyecto;
+
 
 CREATE TABLE Usuario (
     id_usuario SERIAL PRIMARY KEY,

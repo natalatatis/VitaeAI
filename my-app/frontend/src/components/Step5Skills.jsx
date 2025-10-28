@@ -27,6 +27,8 @@ export default function Step5Skills({ formData, setFormData }) {
           backgroundColor: "#fff",
           borderRadius: 2,
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         <Typography variant="h5" gutterBottom mb={3} textAlign="center">
@@ -36,8 +38,8 @@ export default function Step5Skills({ formData, setFormData }) {
           </Box>
         </Typography>
 
-        <Grid container spacing={3} sx={{ mt: 1 }}>
-          <Grid item xs={12}>
+        <Grid container spacing={2} sx={{ flexGrow: 1 }}>
+          <Grid item xs={12} sx={{ flexGrow: 1 }}>
             <TextField
               label="Habilidades"
               name="habilidades"
@@ -45,9 +47,19 @@ export default function Step5Skills({ formData, setFormData }) {
               onChange={handleChange}
               fullWidth
               multiline
-              rows={4}
+              minRows={10}
               placeholder="Ej: JavaScript, React, Node.js, SQL, Python, Cloud computing..."
               required
+              sx={{
+                height: "100%",
+                "& .MuiInputBase-root": {
+                  height: "100%",
+                },
+                "& textarea": {
+                  height: "100% !important",
+                  resize: "none",
+                },
+              }}
             />
           </Grid>
         </Grid>

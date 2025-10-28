@@ -27,6 +27,8 @@ export default function Step2About({ formData, setFormData }) {
           backgroundColor: "#fff",
           borderRadius: 2,
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         <Typography variant="h5" gutterBottom mb={3} textAlign="center">
@@ -36,18 +38,28 @@ export default function Step2About({ formData, setFormData }) {
           </Box>
         </Typography>
 
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
+        <Grid container spacing={2} sx={{ flexGrow: 1 }}>
+          <Grid item xs={12} sx={{ flexGrow: 1 }}>
             <TextField
               label="Acerca de ti"
               name="acercaDe"
               value={formData.acercaDe}
               onChange={handleChange}
               multiline
-              rows={4}
+              minRows={10}
               placeholder="Ej: Soy estudiante de ingeniería con interés en el desarrollo web, trabajo en equipo..."
               fullWidth
               required
+              sx={{
+                height: "100%",
+                "& .MuiInputBase-root": {
+                  height: "100%",
+                },
+                "& textarea": {
+                  height: "100% !important",
+                  resize: "none",
+                },
+              }}
             />
           </Grid>
         </Grid>

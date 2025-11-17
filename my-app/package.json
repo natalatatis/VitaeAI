@@ -10,12 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@date-io/date-fns": "^3.2.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource/manrope": "^5.2.8",
     "@mui/icons-material": "^7.3.2",
     "@mui/material": "^7.3.5",
-    "@mui/x-date-pickers": "^8.17.0",
+    "@mui/x-date-pickers": "^8.18.0",
+    "@mui/x-date-pickers-pro": "^8.18.0",
     "axios": "^1.13.0",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",

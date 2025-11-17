@@ -6,87 +6,107 @@ import {
   CircularProgress,
   Fade,
   TextField,
-  Drawer,
-  IconButton,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  Switch,
-  FormControlLabel,
 } from "@mui/material";
-import { Edit, Close } from "@mui/icons-material";
+import { Edit } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
+
 import Plantilla1 from "../plantillas/Plantilla1";
 import Plantilla2 from "../plantillas/Plantilla2";
 import Plantilla3 from "../plantillas/Plantilla3";
+
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 export default function CVPreview() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { selectedTemplate, formData: initialFormData } = location.state || {};
+
+  const {
+    selectedTemplate,
+    formData: initialFormData,
+    locked,
+    cvId,
+  } = location.state || {};
 
   const storedUser = localStorage.getItem("usuario");
-  const user = storedUser && storedUser !== "null" ? JSON.parse(storedUser) : null;
+  const user =
+    storedUser && storedUser !== "null" ? JSON.parse(storedUser) : null;
 
   const [formData, setFormData] = useState(
     initialFormData || {
-      profileImage: "",
-      showImage: true,
-      fontFamily: "Arial",
-      fontSize: 14,
+      educacion: [],
+      experiencia: [],
+      habilidades: [],
+      idiomas: [],
     }
   );
+
   const [saved, setSaved] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
   const [cvName, setCvName] = useState(initialFormData?.title || "Mi CV");
+
   const cvRef = useRef();
 
-  const templatesMap = { 1: Plantilla1, 2: Plantilla2, 3: Plantilla3 };
-  const TemplateComponent = templatesMap[selectedTemplate];
-
-  const toggleEdit = () => {
-    setEditMode(!editMode);
-    setDrawerOpen(!drawerOpen);
+  const templatesMap = {
+    1: Plantilla1,
+    2: Plantilla2,
+    3: Plantilla3,
   };
 
-  const handleSaveCV = async () => {
-    if (!user) return;
-    try {
-      const isExistingCv = formData.id || formData.id_cv;
-      const url = isExistingCv
-        ? `http://localhost:3001/api/cv/${isExistingCv}`
-        : `http://localhost:3001/api/cv`;
-      const method = isExistingCv ? "PUT" : "POST";
+  const TemplateComponent = templatesMap[selectedTemplate];
 
-      const res = await fetch(url, {
-        method,
+  if (!TemplateComponent) {
+    navigate("/templates", { replace: true });
+    return null;
+  }
+
+  // Redirect user to login if needed
+  const goLogin = () =>
+    navigate("/login", {
+      state: {
+        from: "/preview",
+        previewState: {
+          selectedTemplate,
+          formData,
+          cvId,
+          locked: false,
+        },
+      },
+    });
+
+  // ===============================
+  // AI HELP
+  // ===============================
+  const handleAiHelp = async (section, data) => {
+    try {
+      setLoadingAI(true);
+
+      const response = await fetch("http://localhost:3001/api/ai-help", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id_usuario,
-          title: cvName.trim() || "Mi CV",
-          template: selectedTemplate,
-          data: { ...formData, title: cvName.trim() || "Mi CV" },
-        }),
+        body: JSON.stringify({ section, data }),
       });
 
-      if (res.ok) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
-      } else {
-        const errorData = await res.json();
-        alert(`Error guardando CV: ${errorData.error}`);
-      }
+      const json = await response.json();
+      setLoadingAI(false);
+
+      if (!response.ok) return null;
+
+      return json.suggestion || null;
     } catch (err) {
-      alert("Error al guardar el CV");
+      setLoadingAI(false);
+      console.error("AI Error:", err);
+      return null;
     }
   };
 
+  // ===============================
+  // DOWNLOAD PDF
+  // ===============================
   const handleDownloadPDF = async () => {
+    if (!user) return goLogin();
+
     const element = cvRef.current;
     if (!element) return;
 
@@ -101,9 +121,47 @@ export default function CVPreview() {
     pdf.save(`${cvName.trim() || "CV"}_VitaeAI.pdf`);
   };
 
+  // ===============================
+  // SAVE CV
+  // ===============================
+  const handleSaveCV = async () => {
+    if (!user) return goLogin();
+
+    try {
+      const isExisting = formData.id || formData.id_cv || cvId;
+
+      const url = isExisting
+        ? `http://localhost:3001/api/cv/${isExisting}`
+        : `http://localhost:3001/api/cv`;
+
+      const method = isExisting ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id_usuario,
+          title: cvName.trim(),
+          template: selectedTemplate,
+          data: { ...formData, title: cvName.trim() },
+        }),
+      });
+
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      }
+    } catch (err) {
+      console.error("Error saving CV:", err);
+      alert("Error al guardar el CV");
+    }
+  };
+
+  const mustBlur = locked || !user;
+
   return (
-    <Box sx={{ minHeight: "100vh", background: "#f3f4f6", py: 3 }}>
-      {/* NAV */}
+    <Box sx={{ minHeight: "100vh", py: 3, background: "#f3f4f6", position: "relative" }}>
+      {/* BACK BUTTONS */}
       <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mb: 4 }}>
         <Button variant="outlined" onClick={() => navigate("/")}>
           ← Volver al inicio
@@ -111,169 +169,97 @@ export default function CVPreview() {
         <Button
           variant="contained"
           color="secondary"
-          onClick={() => navigate("/templates", { state: { formData } })}
+          onClick={() =>
+            navigate("/templates", { state: { formData, cvId } })
+          }
         >
           Cambiar plantilla
         </Button>
       </Box>
 
-      {/* CV NAME */}
+      {/* CV NAME INPUT */}
       <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: "bold" }}>
           Tu CV generado:
         </Typography>
+
         <TextField
-          variant="outlined"
           size="small"
           value={cvName}
           onChange={(e) => setCvName(e.target.value)}
-          sx={{ width: "250px", background: "#fff", borderRadius: "10px" }}
+          sx={{ width: 250, background: "#fff", borderRadius: "10px" }}
         />
       </Box>
 
-      {/* CV DISPLAY */}
-      <Box
-        sx={{
-          background: "#fff",
-          borderRadius: "20px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-          width: "90%",
-          maxWidth: 850,
-          p: 4,
-          mb: 3,
-          fontFamily: formData.fontFamily,
-          fontSize: `${formData.fontSize}px`,
-        }}
-        ref={cvRef}
-      >
-        {/* Imagen del perfil */}
-        {formData.profileImage && formData.showImage && (
-          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-            <img
-              src={formData.profileImage}
-              alt="profile"
-              style={{ width: 150, borderRadius: "50%" }}
-            />
-          </Box>
-        )}
-
-        {/* Plantilla */}
-        {TemplateComponent && (
+      {/* CV PREVIEW */}
+      <Box sx={{ position: "relative", maxWidth: 900, mx: "auto", mb: 3 }}>
+        <Box
+          ref={cvRef}
+          sx={{
+            background: "#fff",
+            borderRadius: "20px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+            width: "100%",
+            p: 4,
+            filter: mustBlur ? "blur(6px)" : "none",
+            opacity: mustBlur ? 0.6 : 1,
+            pointerEvents: mustBlur ? "none" : "auto",
+            transition: "all 0.3s ease",
+          }}
+        >
           <TemplateComponent
             formData={formData}
-            editMode={editMode}
             setFormData={setFormData}
+            editMode={editMode && !mustBlur}
+            onAiHelp={handleAiHelp}
           />
+        </Box>
+
+        {/* BLUR OVERLAY */}
+        {mustBlur && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              background: "rgba(255,255,255,0.95)",
+              borderRadius: "20px",
+            }}
+          >
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                Inicia sesión para editar o descargar
+              </Typography>
+              <Button variant="contained" sx={{ mt: 2 }} onClick={goLogin}>
+                Iniciar sesión
+              </Button>
+            </Box>
+          </Box>
         )}
       </Box>
 
-      {/* EDIT BUTTON */}
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+      {/* EDIT TOGGLE + DOWNLOAD / SAVE */}
+      <Box sx={{ textAlign: "center", mb: 3 }}>
         <Button
           variant="contained"
-          color={editMode ? "success" : "primary"}
+          color={editMode ? "warning" : "primary"}
           startIcon={<Edit />}
-          onClick={toggleEdit}
+          onClick={() => setEditMode(!editMode)}
+          disabled={mustBlur}
+          sx={{ mb: 2 }}
         >
-          {editMode ? "Guardar Cambios" : "Editar CV"}
+          {editMode ? "Salir de edición" : "Editar contenido"}
         </Button>
       </Box>
 
-      {/* EDIT DRAWER */}
-      <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box sx={{ width: 300, p: 3 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-            <Typography variant="h6">Editar CV</Typography>
-            <IconButton onClick={() => setDrawerOpen(false)}>
-              <Close />
-            </IconButton>
-          </Box>
-
-          {/* Imagen con switch */}
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              label="URL Imagen"
-              fullWidth
-              value={formData.profileImage || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, profileImage: e.target.value }))
-              }
-            />
-
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.showImage ?? true}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, showImage: e.target.checked }))
-                  }
-                />
-              }
-              label="Mostrar imagen"
-            />
-
-            {formData.profileImage && formData.showImage && (
-              <Box sx={{ mt: 1 }}>
-                <img
-                  src={formData.profileImage}
-                  alt="profile"
-                  style={{ width: "100%", borderRadius: "10px" }}
-                />
-                <Button
-                  size="small"
-                  sx={{ mt: 1 }}
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      profileImage: "",
-                      showImage: false,
-                    }))
-                  }
-                >
-                  Quitar imagen
-                </Button>
-              </Box>
-            )}
-          </Box>
-
-          {/* Font Family */}
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Fuente</InputLabel>
-            <Select
-              value={formData.fontFamily || "Arial"}
-              label="Fuente"
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, fontFamily: e.target.value }))
-              }
-            >
-              <MenuItem value="Arial">Arial</MenuItem>
-              <MenuItem value="Georgia">Georgia</MenuItem>
-              <MenuItem value="Verdana">Verdana</MenuItem>
-              <MenuItem value="Tahoma">Tahoma</MenuItem>
-              <MenuItem value="Courier New">Courier New</MenuItem>
-            </Select>
-          </FormControl>
-
-          {/* Font Size */}
-          <TextField
-            label="Tamaño de letra"
-            type="number"
-            fullWidth
-            value={formData.fontSize || 14}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, fontSize: Number(e.target.value) }))
-            }
-          />
-        </Box>
-      </Drawer>
-
-      {/* BUTTONS */}
       <Fade in>
-        <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 2 }}>
-          <Button variant="contained" onClick={handleDownloadPDF}>
+        <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+          <Button variant="contained" disabled={mustBlur} onClick={handleDownloadPDF}>
             Descargar CV
           </Button>
-          <Button variant="outlined" onClick={handleSaveCV}>
+          <Button variant="outlined" disabled={mustBlur} onClick={handleSaveCV}>
             Guardar en mi cuenta
           </Button>
         </Box>
@@ -281,7 +267,9 @@ export default function CVPreview() {
 
       {/* SAVED MESSAGE */}
       {saved && (
-        <Typography sx={{ mt: 2, color: "green" }}>¡CV guardado con éxito!</Typography>
+        <Typography sx={{ textAlign: "center", mt: 2, color: "green" }}>
+          ¡CV guardado con éxito!
+        </Typography>
       )}
 
       {/* AI LOADING */}
@@ -289,21 +277,15 @@ export default function CVPreview() {
         <Box
           sx={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(255,255,255,0.75)",
+            inset: 0,
+            background: "rgba(255,255,255,0.75)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 9999,
           }}
         >
-          <Box sx={{ textAlign: "center" }}>
-            <CircularProgress size={70} />
-            <Typography sx={{ mt: 2 }}>Generando sugerencia con IA...</Typography>
-          </Box>
+          <CircularProgress size={70} />
         </Box>
       )}
     </Box>

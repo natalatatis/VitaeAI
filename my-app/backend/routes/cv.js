@@ -1,10 +1,43 @@
+// backend/routes/cv.js
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
-// ========================================================================
-// CREAR CV COMPLETO
-// ========================================================================
+/* ============================================================
+   Convertir fechas tipo "febrero de 2023" → "2023-02-01"
+============================================================ */
+function parseFecha(fecha) {
+  if (!fecha) return null;
+
+  const meses = {
+    enero: "01",
+    febrero: "02",
+    marzo: "03",
+    abril: "04",
+    mayo: "05",
+    junio: "06",
+    julio: "07",
+    agosto: "08",
+    septiembre: "09",
+    octubre: "10",
+    noviembre: "11",
+    diciembre: "12",
+  };
+
+  let f = fecha.toLowerCase().trim().replace("de ", "");
+
+  const partes = f.split(" "); // ejemplo: ["febrero","2023"]
+  if (partes.length !== 2) return null;
+
+  const [mes, año] = partes;
+  if (!meses[mes]) return null;
+
+  return `${año}-${meses[mes]}-01`;
+}
+
+/* ============================================================
+   CREAR CV (desde TemplateSelector)
+============================================================ */
 router.post("/generar-cv", async (req, res) => {
   const {
     userId,
@@ -26,14 +59,17 @@ router.post("/generar-cv", async (req, res) => {
     await client.query("BEGIN");
 
     const cvResult = await client.query(
-      `INSERT INTO curriculum (id_usuario, titulo, plantilla, data)
-       VALUES ($1, $2, $3, '{}'::jsonb)
+      `INSERT INTO curriculum (id_usuario, titulo, plantilla, data, updated_at)
+       VALUES ($1, $2, $3, '{}'::jsonb, NOW())
        RETURNING id_cv`,
       [userId, cvTitulo, cvPlantilla]
     );
 
     const cvId = cvResult.rows[0].id_cv;
 
+    // --------------------------------------------
+    // DATOS PERSONALES
+    // --------------------------------------------
     if (datosPersonales) {
       await client.query(
         `INSERT INTO datospersonales 
@@ -42,67 +78,75 @@ router.post("/generar-cv", async (req, res) => {
         [
           datosPersonales.telefono || null,
           datosPersonales.direccion || null,
-          datosPersonales.fecha_nacimiento || null,
+          parseFecha(datosPersonales.fecha_nacimiento),
           datosPersonales.nacionalidad || null,
           cvId,
         ]
       );
     }
 
+    // --------------------------------------------
+    // EXPERIENCIA LABORAL
+    // --------------------------------------------
     for (const exp of experienciaLaboral || []) {
       await client.query(
         `INSERT INTO experiencialaboral
          (empresa, puesto, fecha_inicio, fecha_fin, descripcion, id_cv)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [
-          exp.empresa,
-          exp.puesto,
-          exp.fecha_inicio || null,
-          exp.fecha_fin || null,
-          exp.descripcion,
+          exp.empresa || null,
+          exp.puesto || null,
+          parseFecha(exp.fecha_inicio),
+          parseFecha(exp.fecha_fin),
+          exp.descripcion || null,
           cvId,
         ]
       );
     }
 
+    // --------------------------------------------
+    // EDUCACIÓN
+    // --------------------------------------------
     for (const edu of educacion || []) {
       await client.query(
         `INSERT INTO educacion
          (institucion, titulo, fecha_inicio, fecha_fin, id_cv)
          VALUES ($1, $2, $3, $4, $5)`,
         [
-          edu.institucion,
-          edu.titulo,
-          edu.fecha_inicio || null,
-          edu.fecha_fin || null,
+          edu.institucion || null,
+          edu.titulo || null,
+          parseFecha(edu.fecha_inicio),
+          parseFecha(edu.fecha_fin),
           cvId,
         ]
       );
     }
 
+    // --------------------------------------------
+    // HABILIDADES
+    // --------------------------------------------
     for (const hab of habilidades || []) {
       await client.query(
         `INSERT INTO habilidad (nombre, nivel, id_cv)
          VALUES ($1, $2, $3)`,
-        [hab.nombre, hab.nivel, cvId]
+        [hab.nombre || hab, hab.nivel || null, cvId]
       );
     }
 
+    // --------------------------------------------
+    // IDIOMAS
+    // --------------------------------------------
     for (const idioma of idiomas || []) {
       await client.query(
         `INSERT INTO idioma (nombre, nivel, id_cv)
          VALUES ($1, $2, $3)`,
-        [idioma.nombre, idioma.nivel, cvId]
+        [idioma.nombre || idioma.idioma || "", idioma.nivel || "", cvId]
       );
     }
 
     await client.query("COMMIT");
 
-    res.json({
-      ok: true,
-      id_cv: cvId,
-    });
-
+    res.json({ ok: true, id_cv: cvId });
   } catch (err) {
     await client.query("ROLLBACK");
     console.error("❌ Error creando CV:", err);
@@ -112,10 +156,10 @@ router.post("/generar-cv", async (req, res) => {
   }
 });
 
-// ========================================================================
-// GET CVs de un usuario
-// ========================================================================
-router.get("/:userId", async (req, res) => {
+/* ============================================================
+   GET CVs de un usuario
+============================================================ */
+router.get("/user/:userId", async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id_cv AS id, titulo AS title, plantilla AS template, data, updated_at
@@ -127,13 +171,14 @@ router.get("/:userId", async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
+    console.error("❌ Error al obtener CVs:", err);
     res.status(500).json({ error: "Error al obtener CVs." });
   }
 });
 
-// ========================================================================
-// GET detalle CV
-// ========================================================================
+/* ============================================================
+   GET detalle CV
+============================================================ */
 router.get("/detalle/:id", async (req, res) => {
   try {
     const result = await pool.query(
@@ -148,13 +193,14 @@ router.get("/detalle/:id", async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
+    console.error("❌ Error al obtener CV:", err);
     res.status(500).json({ error: "Error al obtener CV." });
   }
 });
 
-// ========================================================================
-// SAVE SIMPLE CV (from preview)
-// ========================================================================
+/* ============================================================
+   SAVE CV simple
+============================================================ */
 router.post("/cv", async (req, res) => {
   try {
     const { userId, title, template, data } = req.body;
@@ -177,10 +223,9 @@ router.post("/cv", async (req, res) => {
   }
 });
 
-
-// ========================================================================
-// UPDATE CV (from preview)
-// ========================================================================
+/* ============================================================
+   UPDATE CV
+============================================================ */
 router.put("/cv/:id", async (req, res) => {
   try {
     const { title, template, data } = req.body;
@@ -204,18 +249,17 @@ router.put("/cv/:id", async (req, res) => {
   }
 });
 
-
-
-// ========================================================================
-// DELETE CV
-// ========================================================================
-router.delete("/:id", async (req, res) => {
+/* ============================================================
+   DELETE CV
+============================================================ */
+router.delete("/cv/:id", async (req, res) => {
   try {
     await pool.query(`DELETE FROM curriculum WHERE id_cv = $1`, [
       req.params.id,
     ]);
     res.json({ ok: true });
   } catch (err) {
+    console.error("❌ Error al eliminar CV:", err);
     res.status(500).json({ error: "Error al eliminar CV." });
   }
 });

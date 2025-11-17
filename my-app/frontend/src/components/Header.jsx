@@ -36,8 +36,17 @@ export default function Header() {
           paddingX: { xs: 2, md: 3 },
         }}
       >
-        {/* Logo */}
-        <Box sx={{ display: "flex", alignItems: "center" }}>
+        {/* LOGO CLICKEABLE */}
+        <Box
+          component={RouterLink}
+          to="/"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            textDecoration: "none",
+            cursor: "pointer",
+          }}
+        >
           <Box
             sx={{
               width: 15,
@@ -56,7 +65,7 @@ export default function Header() {
           </Typography>
         </Box>
 
-        {/* Navigation */}
+        {/* NAV ITEMS */}
         <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center" }}>
           {navItems.map((item) => (
             <Button
@@ -75,7 +84,7 @@ export default function Header() {
           ))}
         </Box>
 
-        {/* Account / Login */}
+        {/* ACCOUNT / LOGIN */}
         <Link
           component={RouterLink}
           to={isLoggedIn ? "/profile" : "/login"}

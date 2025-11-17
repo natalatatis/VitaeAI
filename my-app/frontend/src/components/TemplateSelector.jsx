@@ -1,3 +1,4 @@
+// src/components/TemplateSelector.jsx
 import React, { useState } from "react";
 import { Box, Button, Grid, Typography, CircularProgress } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -10,80 +11,132 @@ import creativeImg from "../images/creative.png";
 export default function TemplateSelector({ formData }) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  const previousFormData = location.state?.formData || formData;
+  // ================================
+  // 1) SAFELY ensure formData exists
+  // ================================
+  const previousFormData = {
+    ...(location.state?.formData || formData || {}),
+  };
 
+  // ================================
+  // 2) SAFELY ensure required fields
+  // ================================
+  previousFormData.nombre = previousFormData.nombre || "Nombre Completo";
+  previousFormData.apellido = previousFormData.apellido || "";
+  previousFormData.email = previousFormData.email || "correo@ejemplo.com";
+  previousFormData.telefono = previousFormData.telefono || "";
+  previousFormData.acercaDe =
+    previousFormData.acercaDe ||
+    previousFormData.perfil ||
+    "Breve descripción del perfil profesional";
+
+  const safeArray = (x) => (Array.isArray(x) ? x : []);
+
+  previousFormData.experiencia = safeArray(previousFormData.experiencia);
+  previousFormData.educacion = safeArray(previousFormData.educacion);
+  previousFormData.habilidades = safeArray(previousFormData.habilidades);
+  previousFormData.idiomas = safeArray(previousFormData.idiomas);
+
+  // ================================
+  // 3) TEMPLATES
+  // ================================
   const templates = [
     { id: 1, nombre: "Clásica", preview: clasicaImg },
     { id: 2, nombre: "Minimal", preview: minimalImg },
     { id: 3, nombre: "Creativa", preview: creativeImg },
   ];
 
+  // ================================
+  // 4) GENERATE
+  // ================================
   const handleGenerateCV = async () => {
     if (!selectedTemplate) return;
 
     setLoading(true);
 
     try {
-      const user = JSON.parse(localStorage.getItem("user"));
+      const storedUser = localStorage.getItem("usuario");
+      const user = storedUser ? JSON.parse(storedUser) : null;
 
       let cvId = null;
 
-      if (user) {
-        // ===============================
-        //  Usuario logueado → Guardar CV
-        // ===============================
-        const payload = {
-          userId: user.id_usuario,
-          cvTitulo: "Mi CV",
-          cvPlantilla: selectedTemplate,
-
-          datosPersonales: {
-            telefono: previousFormData.telefono || null,
-            direccion: previousFormData.direccion || null,
-            fecha_nacimiento: previousFormData.fecha_nacimiento || null,
-            nacionalidad: previousFormData.nacionalidad || null,
+      // ===============================================
+      // CASE A — USER NOT LOGGED IN -> Just go to preview
+      // ===============================================
+      if (!user) {
+        navigate("/preview", {
+          state: {
+            selectedTemplate,
+            formData: previousFormData,
+            cvId: null,
+            locked: true,
           },
+        });
 
-          experienciaLaboral: previousFormData.experiencia || [],
-          educacion: previousFormData.educacion || [],
-          habilidades: previousFormData.habilidades || [],
-          idiomas: previousFormData.idiomas || [],
-        };
-
-        const response = await axios.post(
-          "http://localhost:3001/api/generar-cv",
-          payload
-        );
-
-        cvId = response.data.id_cv;
+        setLoading(false);
+        return;
       }
 
-      // ===============================
-      // Ambos casos → Ir al preview
-      // Si no hay login, preview se bloquea
-      // ===============================
+      // ===============================================
+      // CASE B — USER LOGGED IN -> Save full CV to DB
+      // ===============================================
+      const payload = {
+        userId: user.id_usuario,
+        cvTitulo: previousFormData.titulo || "Mi CV",
+        cvPlantilla: selectedTemplate,
+
+        datosPersonales: {
+          telefono: previousFormData.telefono || null,
+          direccion: previousFormData.direccion || null,
+          fecha_nacimiento: previousFormData.fecha_nacimiento || null,
+          nacionalidad: previousFormData.nacionalidad || null,
+        },
+
+        experienciaLaboral: previousFormData.experiencia,
+        educacion: previousFormData.educacion,
+        habilidades: previousFormData.habilidades,
+        idiomas: previousFormData.idiomas,
+      };
+
+      const response = await axios.post(
+        "http://localhost:3001/api/generar-cv",
+        payload
+      );
+
+      cvId = response.data.id_cv || response.data.id || null;
+
+      // =============================
+      // Go to preview (editable)
+      // =============================
       navigate("/preview", {
         state: {
           selectedTemplate,
           formData: previousFormData,
-          cvId: cvId, // null si no hay login
+          cvId,
+          locked: false,
         },
       });
-
     } catch (err) {
-      console.error("❌ Error al enviar el CV:", err);
+      console.error("❌ Error enviando CV:", err);
       alert("Hubo un problema al guardar tu CV.");
     } finally {
       setLoading(false);
     }
   };
 
+  // ================================
+  // 5) RENDER
+  // ================================
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" sx={{ mb: 4, fontWeight: "bold", textAlign: "center" }}>
+      <Typography
+        variant="h4"
+        sx={{ mb: 4, fontWeight: "bold", textAlign: "center" }}
+      >
         Selecciona una plantilla para tu CV
       </Typography>
 
@@ -94,7 +147,9 @@ export default function TemplateSelector({ formData }) {
               onClick={() => setSelectedTemplate(tpl.id)}
               sx={{
                 border:
-                  selectedTemplate === tpl.id ? "3px solid #1976d2" : "2px solid #ccc",
+                  selectedTemplate === tpl.id
+                    ? "3px solid #1976d2"
+                    : "2px solid #ccc",
                 borderRadius: 3,
                 cursor: "pointer",
                 overflow: "hidden",
@@ -102,15 +157,22 @@ export default function TemplateSelector({ formData }) {
                 transition: "0.3s",
                 "&:hover": { borderColor: "#1976d2", boxShadow: 3 },
                 bgcolor: "#fafafa",
+                transform:
+                  selectedTemplate === tpl.id ? "scale(1.03)" : "scale(1.0)",
               }}
             >
-              <Box sx={{ height: 230, backgroundColor: "#f5f5f5" }}>
+              <Box sx={{ height: 230 }}>
                 <img
                   src={tpl.preview}
                   alt={tpl.nombre}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
                 />
               </Box>
+
               <Box sx={{ p: 2, textAlign: "center" }}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   {tpl.nombre}
@@ -134,7 +196,7 @@ export default function TemplateSelector({ formData }) {
             {loading ? (
               <>
                 <CircularProgress size={24} color="inherit" sx={{ mr: 2 }} />
-                Guardando tu CV...
+                Generando CV...
               </>
             ) : (
               "Generar mi CV"

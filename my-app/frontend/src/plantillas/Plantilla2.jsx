@@ -1,20 +1,58 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Box, Typography, Button } from "@mui/material";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 
-export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHelp }) {
+export default function CVMinimal({
+  formData = {},
+  editMode,
+  setFormData,
+  onAiHelp,
+}) {
+  const fileInputRef = useRef(null);
+
   const {
     nombre = "Nombre Completo",
     email = "correo@ejemplo.com",
+    telefono = "00000000",
+    direccion = "Dirección",
+    nacionalidad = "Nacionalidad",
     disponibilidad = "Inmediata",
-    perfil = formData.acercaDe || "Breve descripción del perfil profesional destacando habilidades y experiencia relevante.",
+    perfil =
+      formData.acercaDe ||
+      "Breve descripción del perfil profesional destacando habilidades y experiencia relevante.",
     habilidades = [],
     educacion = [],
     experiencia = [],
     idiomas = [],
+    profileImage = "",
   } = formData;
 
-  // 🔹 Clean arrays
+  /* ============================================================
+     CLICK TO UPLOAD IMAGE
+  ============================================================ */
+  const handleImageClick = () => {
+    if (editMode && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData((prev) => ({
+        ...prev,
+        profileImage: reader.result,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  /* ============================================================
+     CLEAN ARRAYS
+  ============================================================ */
   const cleanHabilidades = Array.isArray(habilidades)
     ? habilidades.map((h) => (typeof h === "string" ? h : h.nombre || "")).filter(Boolean)
     : [];
@@ -43,25 +81,25 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
       }))
     : [];
 
-  // 🔹 Helper: Clean AI text
+  /* ============================================================
+     CLEANER AI TEXT
+  ============================================================ */
   const cleanAIText = (text) => {
     if (!text) return "";
     return text
-      .replace(/\*\*.*?\*\*/g, "")
+      .replace(/\*\*/g, "")
       .replace(/--+/g, "")
-      .replace(/claro.*?aprender[:]?/gi, "")
+      .replace(/claro.*?mejorar.?/gi, "")
       .replace(/si necesitas.*$/i, "")
+      .replace(/como modelo.*$/gi, "")
       .trim();
   };
 
-  // 🔹 Extract initials
+  /* ============================================================
+     INITIALS (fallback picture)
+  ============================================================ */
   const iniciales = nombre
-    ? nombre
-        .split(" ")
-        .filter(Boolean)
-        .map((n) => n[0])
-        .join("")
-        .slice(0, 3)
+    ? nombre.split(" ").map((n) => n[0]).join("").slice(0, 3)
     : "?";
 
   return (
@@ -69,7 +107,6 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
       sx={{
         display: "flex",
         justifyContent: "center",
-        alignItems: "flex-start",
         backgroundColor: "#f3f4f6",
         padding: 4,
         minHeight: "100vh",
@@ -87,7 +124,9 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
           flexDirection: "column",
         }}
       >
-        {/* 🔹 Header */}
+        {/* ============================================================
+           HEADER
+        ============================================================ */}
         <Box
           sx={{
             display: "flex",
@@ -98,23 +137,50 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
             borderBottom: "2px solid #10B981",
           }}
         >
+          {/* FOTO + NOMBRE */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            {/* FOTO */}
             <Box
+              onClick={handleImageClick}
               sx={{
-                width: 70,
-                height: 70,
+                width: 75,
+                height: 75,
                 borderRadius: "50%",
-                background: "linear-gradient(135deg, #10B981, #06B6D4)",
+                overflow: "hidden",
+                border: "3px solid #10B981",
+                cursor: editMode ? "pointer" : "default",
+                backgroundColor: "#E5E7EB",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#fff",
-                fontWeight: 700,
-                fontSize: 20,
               }}
             >
-              {iniciales}
+              {profileImage ? (
+                <img
+                  src={profileImage}
+                  alt="perfil"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              ) : (
+                <Typography sx={{ fontWeight: 700, fontSize: 22 }}>
+                  {iniciales}
+                </Typography>
+              )}
             </Box>
+
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleImageChange}
+            />
+
+            {/* NOMBRE + CONTACTO */}
             <Box>
               <Typography
                 contentEditable={editMode}
@@ -123,7 +189,6 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
                   setFormData({ ...formData, nombre: e.target.textContent.trim() })
                 }
                 sx={{
-                  fontFamily: "Montserrat, sans-serif",
                   fontSize: 22,
                   fontWeight: 600,
                   color: "#111827",
@@ -132,22 +197,61 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
                 {nombre}
               </Typography>
 
-              {/* Email */}
-              <Typography
-                contentEditable={editMode}
-                suppressContentEditableWarning
-                onBlur={(e) => {
-                  const raw = e.target.textContent.trim();
-                  const cleanEmail = raw.replace(/^✉️\s*/g, "").trim();
-                  setFormData({ ...formData, email: cleanEmail });
-                }}
-                sx={{ fontSize: 13, color: "#6B7280" }}
-              >
-                ✉️ {email}
+              <Typography sx={{ fontSize: 13, color: "#6B7280" }}>
+                ✉️{" "}
+                <span
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  onBlur={(e) =>
+                    setFormData({ ...formData, email: e.target.textContent.trim() })
+                  }
+                >
+                  {email}
+                </span>
+              </Typography>
+
+              <Typography sx={{ fontSize: 13, color: "#6B7280" }}>
+                📞{" "}
+                <span
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  onBlur={(e) =>
+                    setFormData({ ...formData, telefono: e.target.textContent.trim() })
+                  }
+                >
+                  {telefono}
+                </span>
+              </Typography>
+
+              <Typography sx={{ fontSize: 13, color: "#6B7280" }}>
+                📍{" "}
+                <span
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  onBlur={(e) =>
+                    setFormData({ ...formData, direccion: e.target.textContent.trim() })
+                  }
+                >
+                  {direccion}
+                </span>
+              </Typography>
+
+              <Typography sx={{ fontSize: 13, color: "#6B7280" }}>
+                🌎{" "}
+                <span
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  onBlur={(e) =>
+                    setFormData({ ...formData, nacionalidad: e.target.textContent.trim() })
+                  }
+                >
+                  {nacionalidad}
+                </span>
               </Typography>
             </Box>
           </Box>
 
+          {/* DISPONIBILIDAD */}
           <Box sx={{ textAlign: "right" }}>
             <Typography sx={{ fontSize: 11, color: "#9CA3AF" }}>
               Disponibilidad
@@ -161,64 +265,47 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
                   disponibilidad: e.target.textContent.trim(),
                 })
               }
-              sx={{
-                fontWeight: 700,
-                color: "#10B981",
-                marginTop: 0.5,
-              }}
+              sx={{ fontWeight: 700, color: "#10B981" }}
             >
               {disponibilidad}
             </Typography>
           </Box>
         </Box>
 
-        {/* 🔹 Body */}
+        {/* ================== RESTO DEL CV ================== */}
+
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 3 }}>
-          {/* IZQUIERDA */}
+          {/* LEFT COLUMN */}
           <Box>
-            {/* Perfil */}
+            {/* PERFIL */}
             <Section
-              title="Perfil"
+              title="Perfil profesional"
               showAi={editMode}
-              onAiClick={() => onAiHelp?.("perfil", perfil)}
+              onAiClick={async () => {
+                const aiResult = await onAiHelp?.("perfil", perfil);
+                if (!aiResult) return;
+
+                const cleaned = cleanAIText(aiResult);
+                setFormData({ ...formData, acercaDe: cleaned });
+              }}
             >
               <Typography
                 contentEditable={editMode}
                 suppressContentEditableWarning
+                sx={{ fontSize: 13, color: "#111827" }}
                 onBlur={(e) =>
-                  setFormData({ ...formData, acercaDe: e.target.textContent })
+                  setFormData({ ...formData, acercaDe: e.target.textContent.trim() })
                 }
-                sx={{ fontSize: 13, color: "#111827", lineHeight: 1.5 }}
               >
                 {perfil}
               </Typography>
             </Section>
 
-            {/* Habilidades */}
+            {/* HABILIDADES */}
             <Section title="Habilidades técnicas">
-              {editMode ? (
-                <Box
-                  contentEditable
-                  suppressContentEditableWarning
-                  onBlur={(e) => {
-                    const newSkills = e.target.textContent
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean);
-                    setFormData({ ...formData, habilidades: newSkills });
-                  }}
-                  sx={{
-                    border: "1px dashed #ccc",
-                    borderRadius: 2,
-                    padding: "4px 6px",
-                    minHeight: "24px",
-                  }}
-                >
-                  {cleanHabilidades.join(", ")}
-                </Box>
-              ) : cleanHabilidades.length > 0 ? (
+              {cleanHabilidades.length ? (
                 cleanHabilidades.map((h, i) => (
-                  <Typography key={i} sx={{ fontSize: 13, color: "#111827" }}>
+                  <Typography key={i} sx={{ fontSize: 13 }}>
                     {h}
                   </Typography>
                 ))
@@ -229,240 +316,40 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
               )}
             </Section>
 
-            {/* EDUCACIÓN — editable + CRUD */}
+            {/* EDUCACIÓN */}
             <Section title="Educación">
-              {editMode ? (
-                <>
-                  {cleanEducacion.length > 0 ? (
-                    cleanEducacion.map((edu, idx) => (
-                      <Box
-                        key={idx}
-                        sx={{
-                          mb: 1.5,
-                          p: 1,
-                          border: "1px solid #e5e7eb",
-                          borderRadius: 2,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 0.6,
-                        }}
-                      >
-                        {/* Título */}
-                        <Typography
-                          contentEditable
-                          suppressContentEditableWarning
-                          onBlur={(e) => {
-                            const updated = [...cleanEducacion];
-                            updated[idx].titulo = e.target.textContent.trim();
-                            setFormData({ ...formData, educacion: updated });
-                          }}
-                          sx={{ fontWeight: 600, fontSize: 13, color: "#111827" }}
-                        >
-                          {edu.titulo}
-                        </Typography>
-
-                        {/* Institución */}
-                        <Typography
-                          contentEditable
-                          suppressContentEditableWarning
-                          onBlur={(e) => {
-                            const updated = [...cleanEducacion];
-                            updated[idx].institucion = e.target.textContent.trim();
-                            setFormData({ ...formData, educacion: updated });
-                          }}
-                          sx={{ fontSize: 12, color: "#6B7280" }}
-                        >
-                          {edu.institucion}
-                        </Typography>
-
-                        {/* Periodo */}
-                        <Typography
-                          contentEditable
-                          suppressContentEditableWarning
-                          onBlur={(e) => {
-                            const updated = [...cleanEducacion];
-                            updated[idx].periodo = e.target.textContent.trim();
-                            setFormData({ ...formData, educacion: updated });
-                          }}
-                          sx={{ fontSize: 12, color: "#6B7280", ml: 1 }}
-                        >
-                          {edu.periodo || "Periodo"}
-                        </Typography>
-
-                        {/* Botón eliminar */}
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          size="small"
-                          sx={{ alignSelf: "flex-end", mt: 0.5, borderRadius: 2 }}
-                          onClick={() => {
-                            const filtered = cleanEducacion.filter((_, i) => i !== idx);
-                            setFormData({ ...formData, educacion: filtered });
-                          }}
-                        >
-                          Eliminar
-                        </Button>
-                      </Box>
-                    ))
-                  ) : (
-                    <Typography sx={{ fontSize: 12, color: "#9CA3AF" }}>
-                      No se ha ingresado educación.
-                    </Typography>
-                  )}
-
-                  {/* BOTÓN AGREGAR */}
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size="small"
-                    sx={{
-                      mt: 1,
-                      textTransform: "none",
-                      borderRadius: "20px",
-                    }}
-                    onClick={() => {
-                      const updated = [
-                        ...cleanEducacion,
-                        {
-                          titulo: "Nuevo título",
-                          institucion: "Nueva institución",
-                          periodo: "Periodo",
-                        },
-                      ];
-                      setFormData({ ...formData, educacion: updated });
-                    }}
-                  >
-                    ➕ Agregar educación
-                  </Button>
-                </>
-              ) : cleanEducacion.length > 0 ? (
-                cleanEducacion.map((edu, idx) => (
-                  <Box key={idx} sx={{ mb: 1 }}>
-                    <Typography sx={{ fontWeight: 600, color: "#111827" }}>
-                      {edu.titulo}
-                    </Typography>
-                    <Typography sx={{ color: "#374151", fontSize: 12 }}>
-                      {edu.institucion}
-                    </Typography>
-                    <Typography sx={{ color: "#6B7280", ml: 1 }}>
-                      {edu.periodo}
-                    </Typography>
-                  </Box>
-                ))
-              ) : (
-                <Typography sx={{ fontSize: 12, color: "#9CA3AF" }}>
-                  No se ha ingresado educación.
-                </Typography>
-              )}
+              {cleanEducacion.map((edu, i) => (
+                <Box key={i} sx={{ mb: 1 }}>
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {edu.titulo}
+                  </Typography>
+                  <Typography sx={{ fontSize: 12 }}>
+                    {edu.institucion}
+                  </Typography>
+                  <Typography sx={{ color: "#6B7280" }}>
+                    {edu.periodo}
+                  </Typography>
+                </Box>
+              ))}
             </Section>
 
-            {/* 🔹 IDIOMAS */}
+            {/* IDIOMAS */}
             <Section title="Idiomas">
-              {editMode ? (
-                <>
-                  {cleanIdiomas.length > 0 ? (
-                    cleanIdiomas.map((i, idx) => (
-                      <Box
-                        key={idx}
-                        sx={{
-                          mb: 1.5,
-                          p: 1,
-                          border: "1px solid #d1d5db",
-                          borderRadius: 2,
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: 2,
-                        }}
-                      >
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => {
-                              const updated = [...cleanIdiomas];
-                              updated[idx].idioma = e.target.textContent.trim();
-                              setFormData({ ...formData, idiomas: updated });
-                            }}
-                            sx={{ fontWeight: 600, color: "#111827", fontSize: 13 }}
-                          >
-                            {i.idioma}
-                          </Typography>
-
-                          <Typography
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => {
-                              const updated = [...cleanIdiomas];
-                              updated[idx].nivel = e.target.textContent.trim();
-                              setFormData({ ...formData, idiomas: updated });
-                            }}
-                            sx={{ color: "#6B7280", fontSize: 12, ml: 1 }}
-                          >
-                            {i.nivel}
-                          </Typography>
-                        </Box>
-
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          size="small"
-                          sx={{ borderRadius: "50%", minWidth: "auto", px: 1 }}
-                          onClick={() => {
-                            const filtered = cleanIdiomas.filter((_, x) => x !== idx);
-                            setFormData({ ...formData, idiomas: filtered });
-                          }}
-                        >
-                          ❌
-                        </Button>
-                      </Box>
-                    ))
-                  ) : (
-                    <Typography sx={{ fontSize: 12, color: "#9CA3AF" }}>
-                      No se han agregado idiomas.
-                    </Typography>
-                  )}
-
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size="small"
-                    sx={{
-                      mt: 1,
-                      textTransform: "none",
-                      borderRadius: "20px",
-                    }}
-                    onClick={() => {
-                      const updated = [
-                        ...cleanIdiomas,
-                        { idioma: "Nuevo idioma", nivel: "Nivel" },
-                      ];
-                      setFormData({ ...formData, idiomas: updated });
-                    }}
-                  >
-                    ➕ Agregar idioma
-                  </Button>
-                </>
-              ) : cleanIdiomas.length > 0 ? (
+              {cleanIdiomas.length ? (
                 cleanIdiomas.map((i, idx) => (
-                  <Box key={idx} sx={{ mb: 1 }}>
-                    <Typography sx={{ fontWeight: 600, color: "#111827" }}>
-                      {i.idioma}
-                    </Typography>
-                    <Typography sx={{ color: "#6B7280", ml: 1 }}>
-                      {i.nivel}
-                    </Typography>
-                  </Box>
+                  <Typography key={idx}>
+                    {i.idioma} — {i.nivel}
+                  </Typography>
                 ))
               ) : (
-                <Typography sx={{ fontSize: 12, color: "#9CA3AF" }}>
+                <Typography sx={{ color: "#9CA3AF" }}>
                   No se han agregado idiomas.
                 </Typography>
               )}
             </Section>
           </Box>
 
-          {/* DERECHA */}
+          {/* RIGHT COLUMN */}
           <Box>
             <Section
               title="Experiencia"
@@ -472,6 +359,7 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
                 if (!aiResult) return;
 
                 const cleaned = cleanAIText(aiResult);
+
                 const paragraphs = cleaned
                   .split(/\n{2,}/)
                   .map((p) => p.trim())
@@ -488,47 +376,16 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
             >
               {cleanExperiencia.length === 0 ||
               cleanExperiencia[0]?.sinExperiencia ? (
-                <Typography
-                  sx={{ fontSize: 12, color: "#9CA3AF", fontStyle: "italic" }}
-                >
+                <Typography sx={{ fontSize: 12, color: "#9CA3AF", fontStyle: "italic" }}>
                   Sin experiencia laboral.
                 </Typography>
               ) : (
                 cleanExperiencia.map((exp, i) => (
                   <Box key={i} sx={{ mb: 2 }}>
-                    <Typography
-                      contentEditable={editMode}
-                      suppressContentEditableWarning
-                      onBlur={(e) => {
-                        const newExp = [...cleanExperiencia];
-                        newExp[i].titulo = e.target.textContent.trim();
-                        setFormData({ ...formData, experiencia: newExp });
-                      }}
-                      sx={{
-                        fontWeight: 600,
-                        fontSize: 13,
-                        color: "#10B981",
-                        mb: 0.5,
-                      }}
-                    >
+                    <Typography sx={{ fontWeight: 600, color: "#10B981" }}>
                       {exp.titulo}
                     </Typography>
-
-                    <Typography
-                      contentEditable={editMode}
-                      suppressContentEditableWarning
-                      onBlur={(e) => {
-                        const newExp = [...cleanExperiencia];
-                        newExp[i].descripcion = e.target.textContent.trim();
-                        setFormData({ ...formData, experiencia: newExp });
-                      }}
-                      sx={{
-                        fontSize: 13,
-                        color: "#111827",
-                        lineHeight: 1.6,
-                        whiteSpace: "pre-line",
-                      }}
-                    >
+                    <Typography sx={{ fontSize: 13, whiteSpace: "pre-line" }}>
                       {exp.descripcion}
                     </Typography>
                   </Box>
@@ -542,7 +399,9 @@ export default function CVMinimal({ formData = {}, editMode, setFormData, onAiHe
   );
 }
 
-/* 🔹 Reusable Section Component */
+/* ============================================================
+   SECTION COMPONENT
+============================================================ */
 function Section({ title, children, showAi = false, onAiClick }) {
   return (
     <Box sx={{ mb: 3 }}>
@@ -556,7 +415,8 @@ function Section({ title, children, showAi = false, onAiClick }) {
       >
         {title}
       </Typography>
-      {showAi && onAiClick && (
+
+      {showAi && (
         <Button
           size="small"
           variant="outlined"
@@ -573,6 +433,7 @@ function Section({ title, children, showAi = false, onAiClick }) {
           Ayuda con IA
         </Button>
       )}
+
       {children}
     </Box>
   );

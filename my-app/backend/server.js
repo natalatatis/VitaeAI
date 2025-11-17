@@ -1,70 +1,20 @@
+// backend/server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const argon2 = require("argon2");
 const pool = require("./db");
-const app = express();
 const OpenAI = require("openai");
+
+const app = express();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// ============================================================
+// FIX: Aumentar límite para permitir imágenes base64
+// ============================================================
 app.use(cors());
-app.use(express.json());
-
-// ========================================================================
-// Helper: Normalize Dates
-// ========================================================================
-function normalizeDate(dateString) {
-  if (!dateString) return null;
-
-  try {
-    // ✓ Caso 1: ya viene como YYYY-MM-DD o YYYY-MM
-    if (/^\d{4}-\d{2}(-\d{2})?$/.test(dateString)) {
-      return dateString;
-    }
-
-    // Mapeo de meses
-    const meses = {
-      enero: "01", febrero: "02", marzo: "03", abril: "04",
-      mayo: "05", junio: "06", julio: "07", agosto: "08",
-      septiembre: "09", setiembre: "09",
-      octubre: "10", noviembre: "11", diciembre: "12",
-    };
-
-    const lower = dateString.toLowerCase().trim();
-
-    // ✓ Caso 2: "mes de año" o "mes año"
-    const match = lower.match(/([a-záéíóú]+)\s*(de)?\s*(\d{2,4})/);
-    if (match) {
-      const mes = meses[match[1]];
-      
-      let year = match[3];
-
-      // convertir año de 2 dígitos → 20xx
-      if (year.length === 2) {
-        year = "20" + year;
-      }
-
-      if (mes) return `${year}-${mes}-01`;
-    }
-
-    // ✓ Caso 3: solo año "2015"
-    if (/^\d{4}$/.test(lower)) {
-      return `${lower}-01-01`;
-    }
-
-    // ✓ Caso 4: intentar con Date()
-    const d = new Date(dateString);
-    if (!isNaN(d.getTime())) {
-      return d.toISOString().split("T")[0];
-    }
-
-    // Si todo falla
-    return null;
-  } catch {
-    return null;
-  }
-}
-
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 // ========================================================================
 // USER ENDPOINTS
@@ -76,6 +26,7 @@ app.get("/usuarios", async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
+    console.error("❌ Error usuarios:", err);
     res.status(500).json({ error: "Error al obtener usuarios" });
   }
 });
@@ -101,6 +52,7 @@ app.post("/usuarios", async (req, res) => {
     if (err.code === "23505") {
       res.status(400).json({ error: "El correo ya está registrado" });
     } else {
+      console.error("❌ Error creando usuario:", err);
       res.status(500).json({ error: err.message });
     }
   }
@@ -134,95 +86,73 @@ app.post("/login", async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("❌ Error login:", err);
     res.status(500).json({ ok: false, message: "Error del servidor" });
   }
 });
 
-// AI HELP 
-app.post("/ai-help", async (req, res) => {
+// ========================================================================
+// AI HELP
+// ========================================================================
+app.post("/api/ai-help", async (req, res) => {
   const { section, data } = req.body;
 
-  if (!section)
-    return res.status(400).json({ error: "Falta 'section'." });
-
   try {
-    // ==========================================================
-    //  DETECCIÓN INTELIGENTE DE "EXPERIENCIA" VACÍA
-    // ==========================================================
-    if (section === "experiencia") {
-      const puesto = data?.puesto?.trim?.() || "";
-      const descripcion = data?.descripcion?.trim?.() || "";
-
-      const experienciaVacia =
-        (!puesto || puesto.toLowerCase().includes("experiencia")) &&
-        (!descripcion || descripcion.length < 3);
-
-      if (experienciaVacia) {
-        return res.json({
-          suggestion:
-            "Aún no cuento con experiencia laboral formal, pero estoy motivado(a) por aprender, desarrollarme profesionalmente y contribuir de manera responsable en los proyectos en los que participe.",
-        });
-      }
-    }
-
-    // ==========================================================
-    // 🧠 Texto normal o de otras secciones
-    // ==========================================================
-    let text = "";
-
-    if (typeof data === "string") {
-      text = data.trim();
-    } else if (typeof data === "object" && data !== null) {
-      // Si tiene "descripcion", usarla
-      if (data.descripcion) {
-        text = data.descripcion.trim();
-      } else {
-        text = JSON.stringify(data).trim();
-      }
-    }
-
-    // Cualquier otra sección con texto vacío → default corto
-    if (text.length === 0) {
+    if (section === "experiencia" && data?.sinExperiencia) {
       return res.json({
         suggestion:
-          "Actualmente estoy desarrollando mis habilidades y busco oportunidades para continuar creciendo profesionalmente.",
+          "Aún no cuento con experiencia laboral formal, pero estoy motivado(a) por aprender y desarrollarme profesionalmente.",
       });
     }
 
-    // ==========================================================
-    // IA NORMAL
-    // ==========================================================
-    const prompt = `
-Eres experto en redacción de currículums.
-Mejora el siguiente texto sin inventar datos y sin usar encabezados.
-Devuelve solo el texto final:
+    let text = "";
 
-${text}
+    if (typeof data === "string") text = data.trim();
+    else if (Array.isArray(data)) {
+      text = data
+        .map((item) => item.descripcion || item.puesto || "")
+        .filter(Boolean)
+        .join(". ");
+    } else if (typeof data === "object" && data !== null) {
+      text = Object.values(data)
+        .join(" ")
+        .replace(/sinExperiencia/gi, "")
+        .trim();
+    }
+
+    if (text.length < 3) {
+      return res.json({
+        suggestion:
+          "Busco aprender, desarrollarme profesionalmente y aportar de manera responsable en nuevos proyectos.",
+      });
+    }
+
+    const prompt = `
+      Eres un experto redactando curriculums, mejora este texto para un currículum.
+      Agrega aglo de información genérica para rellenar. No inventes datos y no uses viñetas:
+
+      ${text}
     `;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "Devuelve únicamente el texto mejorado." },
+        { role: "system", content: "Responde solo con el texto corregido." },
         { role: "user", content: prompt },
       ],
-      temperature: 0.6,
+      temperature: 0.5,
     });
 
-    const suggestion =
-      completion.choices?.[0]?.message?.content?.trim() || "";
-
+    const suggestion = completion.choices?.[0]?.message?.content?.trim();
     return res.json({ suggestion });
-
-  } catch (error) {
-    console.error("❌ Error en AI HELP:", error);
-    return res.status(500).json({ error: "Error generando sugerencia con IA." });
+  } catch (err) {
+    console.error("❌ AI Error:", err);
+    return res.status(500).json({ error: "Error al generar sugerencia" });
   }
 });
 
-
 // ========================================================================
-// ROUTES (CV now lives here!!)
+// ROUTES CV
 // ========================================================================
 const cvRoutes = require("./routes/cv");
 app.use("/api", cvRoutes);

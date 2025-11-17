@@ -4,7 +4,6 @@ import {
   Button,
   TextField,
   Typography,
-  Link,
   IconButton,
 } from "@mui/material";
 import theme from "../theme";
@@ -17,13 +16,13 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Guardar la página desde donde vengo (ej: /preview)
+  // ⭐ Capture redirect intent
   useEffect(() => {
-    if (location.state?.from) {
-      localStorage.setItem("redirectAfterLogin", location.state.from);
+    if (location.state?.from === "/preview") {
+      localStorage.setItem("redirectAfterLogin", "/preview");
       localStorage.setItem(
         "previewState",
-        JSON.stringify(location.state.previewState || null)
+        JSON.stringify(location.state.previewState)
       );
     }
   }, [location.state]);
@@ -38,36 +37,31 @@ export default function LoginPage() {
 
       const data = await res.json();
 
-      if (res.ok) {
-        alert(`Bienvenido ${data.usuario.nombre}`);
+      if (!res.ok) return alert(data.message || "Credenciales incorrectas");
 
-        // Guardar usuario correctamente
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));
+      // Save user
+      localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
-        // Revisar si venía del preview
-        const redirectPath = localStorage.getItem("redirectAfterLogin");
-        const previewState = localStorage.getItem("previewState");
+      // ⭐ Check redirect
+      const redirectPath = localStorage.getItem("redirectAfterLogin");
+      const previewState = localStorage.getItem("previewState");
 
-        // Si venía del preview → volver con su state
-        if (redirectPath === "/preview" && previewState) {
-          localStorage.removeItem("redirectAfterLogin");
-          const parsedPreview = JSON.parse(previewState);
-          localStorage.removeItem("previewState");
+      if (redirectPath === "/preview" && previewState) {
+        const parsed = JSON.parse(previewState);
 
-          return navigate("/preview", {
-            replace: true,
-            state: parsedPreview,
-          });
-        }
+        localStorage.removeItem("redirectAfterLogin");
+        localStorage.removeItem("previewState");
 
-        // Si NO venía del preview → ir al perfil
-        navigate("/profile");
-      } else {
-        alert(data.message || "Correo o contraseña incorrectos");
+        return navigate("/preview", {
+          replace: true,
+          state: parsed,
+        });
       }
+
+      navigate("/profile");
     } catch (err) {
       console.error(err);
-      alert("Error al iniciar sesión");
+      alert("Error del servidor");
     }
   };
 
@@ -76,16 +70,16 @@ export default function LoginPage() {
       sx={{
         minHeight: "100vh",
         display: "flex",
-        alignItems: "center",
         justifyContent: "center",
-        padding: 2,
+        alignItems: "center",
+        p: 2,
       }}
     >
       <Box
         sx={{
           width: 500,
-          padding: 6,
-          backgroundColor: "#fff",
+          p: 6,
+          background: "#fff",
           boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
         }}
       >
@@ -93,46 +87,25 @@ export default function LoginPage() {
           <ArrowBackIcon />
         </IconButton>
 
-        <Typography
-          variant="h4"
-          align="center"
-          fontWeight="bold"
-          mb={4}
-          color="black"
-        >
+        <Typography variant="h4" align="center" fontWeight="bold" mb={4}>
           Iniciar Sesión
         </Typography>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           <TextField
             label="Correo Electrónico"
-            variant="outlined"
             fullWidth
             value={correo}
             onChange={(e) => setCorreo(e.target.value)}
-            required
           />
 
           <TextField
             label="Contraseña"
             type="password"
-            variant="outlined"
             fullWidth
             value={contrasenia}
             onChange={(e) => setContrasenia(e.target.value)}
-            required
           />
-
-          <Box sx={{ textAlign: "right" }}>
-            <Link
-              component={RouterLink}
-              to="/"
-              underline="hover"
-              sx={{ color: theme.palette.secondary.main, fontSize: "0.85rem" }}
-            >
-              ¿Olvidaste tu contraseña?
-            </Link>
-          </Box>
 
           <Button
             variant="contained"
@@ -149,6 +122,7 @@ export default function LoginPage() {
           <Button
             component={RouterLink}
             to="/registro"
+            state={location.state} // ⭐ Keeps preview redirect when going to register
             variant="contained"
             sx={{
               backgroundColor: theme.palette.secondary.main,

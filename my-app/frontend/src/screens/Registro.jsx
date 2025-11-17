@@ -1,43 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, TextField, Typography, Link, IconButton } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Link,
+  IconButton,
+} from "@mui/material";
 import theme from "../theme";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 
 export default function RegistroPage() {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // If user arrived from Wizard, these values exist
-  const {
-    nombre: nombreInicial,
-    apellido: apellidoInicial,
-    correo: correoInicial,
-    cvData,
-    selectedTemplate,
-  } = location.state || {};
+  // Coming from preview/login
+  const cameFromPreview = location.state?.from === "/preview";
 
-  const cameFromWizard = !!cvData; // ⭐ key flag
-
-  const [nombre, setNombre] = useState(nombreInicial || "");
-  const [apellido, setApellido] = useState(apellidoInicial || "");
-  const [correo, setCorreo] = useState(correoInicial || "");
+  const [nombre, setNombre] = useState(location.state?.nombre || "");
+  const [apellido, setApellido] = useState(location.state?.apellido || "");
+  const [correo, setCorreo] = useState(location.state?.correo || "");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (nombreInicial || correoInicial) {
-      setNombre(nombreInicial || "");
-      setApellido(apellidoInicial || "");
-      setCorreo(correoInicial || "");
-    }
-  }, [nombreInicial, apellidoInicial, correoInicial]);
-
   const handleSubmit = async () => {
-    if (password !== confirmPassword) {
+    if (password !== confirmPassword)
       return alert("Las contraseñas no coinciden");
-    }
 
     try {
       const res = await fetch("http://localhost:3001/usuarios", {
@@ -54,32 +43,11 @@ export default function RegistroPage() {
       const data = await res.json();
       if (!res.ok) return alert(`Error: ${data.error}`);
 
-      // Save user locally
-      localStorage.setItem("user", JSON.stringify(data));
-
-      // ⭐ If coming from the wizard → create CV + go to preview
-      if (cameFromWizard && selectedTemplate && cvData) {
-        await fetch("http://localhost:3001/api/cv", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: data.id_usuario,
-            title: "Mi CV",
-            template: selectedTemplate,
-            data: cvData,
-          }),
-        });
-
-        return navigate("/preview", {
-          state: {
-            selectedTemplate,
-            formData: cvData,
-          },
-        });
-      }
-
-      // ⭐ If NOT from wizard → send to login
-      return navigate("/login");
+      // ⭐ ALWAYS redirect back to login with state
+      // LoginPage will handle the preview redirect if needed
+      return navigate("/login", {
+        state: location.state, // keeps previewState + from="/preview"
+      });
 
     } catch (err) {
       console.error(err);
@@ -92,62 +60,37 @@ export default function RegistroPage() {
       sx={{
         minHeight: "100vh",
         display: "flex",
-        alignItems: "center",
         justifyContent: "center",
-        padding: 2,
-        backgroundColor: "#f9fafb",
+        alignItems: "center",
+        background: "#f9fafb",
+        p: 2,
       }}
     >
       <Box
         sx={{
           width: 500,
-          padding: 6,
-          backgroundColor: "#fff",
+          p: 6,
+          background: "#fff",
           boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
           borderRadius: 3,
         }}
       >
-        <IconButton component={RouterLink} to="/" sx={{ mb: 2, color: "black" }}>
+        <IconButton component={RouterLink} to="/" sx={{ mb: 2 }}>
           <ArrowBackIcon />
         </IconButton>
 
-        <Typography
-          variant="h4"
-          component="h1"
-          align="center"
-          fontWeight="bold"
-          mb={4}
-          color="black"
-        >
+        <Typography variant="h4" align="center" fontWeight="bold" mb={4}>
           Crea tu cuenta
         </Typography>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <TextField
-            label="Nombre"
-            fullWidth
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-          />
-
-          <TextField
-            label="Apellido"
-            fullWidth
-            value={apellido}
-            onChange={(e) => setApellido(e.target.value)}
-          />
-
-          <TextField
-            label="Correo Electrónico"
-            fullWidth
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-          />
+          <TextField label="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          <TextField label="Apellido" value={apellido} onChange={(e) => setApellido(e.target.value)} />
+          <TextField label="Correo" value={correo} onChange={(e) => setCorreo(e.target.value)} />
 
           <TextField
             label="Contraseña"
             type="password"
-            fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -155,19 +98,13 @@ export default function RegistroPage() {
           <TextField
             label="Confirmar contraseña"
             type="password"
-            fullWidth
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
 
           <Box sx={{ textAlign: "right" }}>
-            <Link
-              component={RouterLink}
-              to="/login"
-              underline="hover"
-              sx={{ color: theme.palette.secondary.main, fontSize: "0.85rem" }}
-            >
-              ¿Ya tienes una cuenta? Presiona aquí
+            <Link component={RouterLink} to="/login" underline="hover">
+              ¿Ya tienes una cuenta?
             </Link>
           </Box>
 

@@ -1,287 +1,499 @@
-import React, { useState, useRef } from "react";
-import {
-  Box,
-  Button,
-  Typography,
-  CircularProgress,
-  Fade,
-  TextField,
-  Drawer,
-  IconButton,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  Switch,
-  FormControlLabel,
-} from "@mui/material";
-import { Edit, Close } from "@mui/icons-material";
-import { useNavigate, useLocation } from "react-router-dom";
-import Plantilla1 from "../plantillas/Plantilla1";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import React from "react";
+import { Box, Typography, Button } from "@mui/material";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 
-export default function CVPreview() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { selectedTemplate, formData: initialFormData } = location.state || {};
+export default function Plantilla1({
+  formData,
+  editMode,
+  setFormData,
+  onAiHelp,
+}) {
+  /* ============================================================
+     SAFE NORMALIZATION LAYERS
+  ============================================================ */
 
-  const storedUser = localStorage.getItem("usuario");
-  const user = storedUser && storedUser !== "null" ? JSON.parse(storedUser) : null;
+  const cleanEducacion = Array.isArray(formData.educacion)
+    ? formData.educacion.map((e) => ({
+        titulo: e.titulo || "Título",
+        institucion: e.institucion || "Institución",
+        periodo: e.periodo || "",
+      }))
+    : [];
 
-  const [formData, setFormData] = useState(
-    initialFormData || {
-      profileImage: "",
-      showImage: true,
-      fontFamily: "Arial",
-      fontSize: 14,
-    }
-  );
-  const [saved, setSaved] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [loadingAI, setLoadingAI] = useState(false);
-  const [cvName, setCvName] = useState(initialFormData?.title || "Mi CV");
-  const cvRef = useRef();
+  const cleanExperiencia = Array.isArray(formData.experiencia)
+    ? formData.experiencia.map((e) => ({
+        puesto: e.puesto || "Puesto",
+        periodo: e.periodo || "",
+        descripcion: e.descripcion || "",
+        sinExperiencia: e.sinExperiencia || false,
+      }))
+    : [];
 
-  const toggleEdit = () => {
-    setEditMode(!editMode);
-    setDrawerOpen(!drawerOpen);
+  const cleanHabilidades = Array.isArray(formData.habilidades)
+    ? formData.habilidades.map((h) =>
+        typeof h === "string" ? h : h?.nombre || ""
+      )
+    : [];
+
+  const cleanIdiomas = Array.isArray(formData.idiomas)
+    ? formData.idiomas.map((i) => ({
+        idioma:
+          typeof i === "string"
+            ? i
+            : i.idioma || i.nombre || "Idioma",
+        nivel:
+          typeof i === "string"
+            ? ""
+            : i.nivel || "",
+      }))
+    : [];
+
+  const {
+    nombre = "Nombre Completo",
+    puesto = "Puesto / Profesión",
+    ubicacion = "Ciudad, País",
+    telefono = "+502 1234 5678",
+    email = "correo@ejemplo.com",
+    direccion = "Dirección",
+    nacionalidad = "Nacionalidad",
+    acercaDe = "Breve descripción del perfil profesional...",
+    fontFamily = "Arial",
+    fontSize = 14,
+  } = formData;
+
+  /* ============================================================
+     CLEAN AI TEXT
+  ============================================================ */
+  const cleanAIText = (text) =>
+    text
+      ?.replace(/\*\*/g, "")
+      .replace(/--+/g, "")
+      .replace(/claro.*?mejorar.?/gi, "")
+      .replace(/como modelo.*$/gi, "")
+      .replace(/si necesitas.*$/i, "")
+      .trim() || "";
+
+  /* ============================================================
+     EXPERIENCE TEXT FORMAT FOR AI
+  ============================================================ */
+  const getExperienceText = () => {
+    if (!cleanExperiencia.length || cleanExperiencia[0]?.sinExperiencia)
+      return "";
+
+    return cleanExperiencia
+      .map(
+        (e) => `${e.puesto}. ${e.descripcion || "Descripción no disponible"}`
+      )
+      .join("\n\n");
   };
 
-  const handleSaveCV = async () => {
-    if (!user) return;
-    try {
-      const isExistingCv = formData.id || formData.id_cv;
-      const url = isExistingCv
-        ? `http://localhost:3001/api/cv/${isExistingCv}`
-        : `http://localhost:3001/api/cv`;
-      const method = isExistingCv ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: user.id_usuario,
-          title: cvName.trim() || "Mi CV",
-          template: selectedTemplate,
-          data: { ...formData, title: cvName.trim() || "Mi CV" },
-        }),
-      });
-
-      if (res.ok) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
-      } else {
-        const errorData = await res.json();
-        alert(`Error guardando CV: ${errorData.error}`);
-      }
-    } catch (err) {
-      alert("Error al guardar el CV");
-    }
+  /* ============================================================
+     EDIT HELPERS
+  ============================================================ */
+  const updateArray = (key, index, field, value) => {
+    const updated = [...formData[key]];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormData({ ...formData, [key]: updated });
   };
 
-  const handleDownloadPDF = async () => {
-    const element = cvRef.current;
-    if (!element) return;
+  const editable = (value, key) =>
+    editMode ? (
+      <span
+        contentEditable
+        suppressContentEditableWarning
+        onBlur={(e) =>
+          setFormData({ ...formData, [key]: e.target.textContent.trim() })
+        }
+      >
+        {value}
+      </span>
+    ) : (
+      value
+    );
 
-    const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-    const imgData = canvas.toDataURL("image/png");
-
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`${cvName.trim() || "CV"}_VitaeAI.pdf`);
-  };
-
+  /* ============================================================
+     RENDER
+  ============================================================ */
   return (
-    <Box sx={{ minHeight: "100vh", background: "#f3f4f6", py: 3 }}>
-      {/* NAV */}
-      <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mb: 4 }}>
-        <Button variant="outlined" onClick={() => navigate("/")}>
-          ← Volver al inicio
-        </Button>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => navigate("/templates", { state: { formData } })}
-        >
-          Cambiar plantilla
-        </Button>
-      </Box>
-
-      {/* CV NAME */}
-      <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-          Tu CV generado:
-        </Typography>
-        <TextField
-          variant="outlined"
-          size="small"
-          value={cvName}
-          onChange={(e) => setCvName(e.target.value)}
-          sx={{ width: "250px", background: "#fff", borderRadius: "10px" }}
-        />
-      </Box>
-
-      {/* CV DISPLAY */}
+    <Box
+      sx={{
+        width: "100%",
+        background: "#fff",
+        fontFamily,
+        fontSize,
+        lineHeight: 1.5,
+        p: 2,
+      }}
+    >
+      {/* HEADER */}
       <Box
         sx={{
-          background: "#fff",
-          borderRadius: "20px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
-          width: "90%",
-          maxWidth: 850,
-          p: 4,
-          mb: 3,
-          fontFamily: formData.fontFamily,
-          fontSize: `${formData.fontSize}px`,
+          pb: 2,
+          borderBottom: "3px solid #b3b3b3",
+          display: "flex",
         }}
-        ref={cvRef}
       >
-        {/* Plantilla 1 con imagen opcional */}
-        <Plantilla1 formData={formData} editMode={editMode} setFormData={setFormData} />
+        <Box>
+          <Typography sx={{ fontSize: 28, fontWeight: 700 }}>
+            {editable(nombre, "nombre")}
+          </Typography>
+
+          <Typography sx={{ fontSize: 16, color: "#555" }}>
+            {editable(puesto, "puesto")}
+          </Typography>
+
+          <Typography sx={{ fontSize: 15, color: "#777" }}>
+            {editable(ubicacion, "ubicacion")}
+          </Typography>
+        </Box>
       </Box>
 
-      {/* EDIT BUTTON */}
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
-        <Button
-          variant="contained"
-          color={editMode ? "success" : "primary"}
-          startIcon={<Edit />}
-          onClick={toggleEdit}
-        >
-          {editMode ? "Guardar Cambios" : "Editar CV"}
-        </Button>
+      {/* CONTACT INFO */}
+      <Box sx={{ mt: 2, mb: 3, fontSize: 13, color: "#444" }}>
+        <Box sx={{ display: "flex", gap: 3 }}>
+          📞 {editable(telefono, "telefono")}
+          ✉️ {editable(email, "email")}
+        </Box>
+
+        <Box sx={{ mt: 1 }}>📍 {editable(direccion, "direccion")}</Box>
+        <Box sx={{ mt: 1 }}>🌎 {editable(nacionalidad, "nacionalidad")}</Box>
       </Box>
 
-      {/* EDIT DRAWER */}
-      <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box sx={{ width: 300, p: 3 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-            <Typography variant="h6">Editar CV</Typography>
-            <IconButton onClick={() => setDrawerOpen(false)}>
-              <Close />
-            </IconButton>
-          </Box>
-
-          {/* Imagen con switch */}
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              label="URL Imagen"
-              fullWidth
-              value={formData.profileImage || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, profileImage: e.target.value }))
-              }
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.showImage ?? true}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, showImage: e.target.checked }))
-                  }
-                />
-              }
-              label="Mostrar imagen"
-            />
-            {formData.profileImage && formData.showImage && (
-              <Box sx={{ mt: 1 }}>
-                <img
-                  src={formData.profileImage}
-                  alt="profile"
-                  style={{ width: "100%", borderRadius: "50%" }}
-                />
-                <Button
-                  size="small"
-                  sx={{ mt: 1 }}
-                  onClick={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      profileImage: "",
-                      showImage: false,
-                    }))
-                  }
-                >
-                  Quitar imagen
-                </Button>
-              </Box>
-            )}
-          </Box>
-
-          {/* Font Family */}
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Fuente</InputLabel>
-            <Select
-              value={formData.fontFamily || "Arial"}
-              label="Fuente"
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, fontFamily: e.target.value }))
+      {/* GRID */}
+      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+        {/* LEFT COLUMN */}
+        <Box>
+          {/* PERFIL PROFESIONAL */}
+          <Section
+            title="Perfil profesional"
+            editMode={editMode}
+            onAiClick={async () => {
+              const result = await onAiHelp?.("perfil", acercaDe);
+              if (!result) return;
+              setFormData((p) => ({
+                ...p,
+                acercaDe: cleanAIText(result),
+              }));
+            }}
+          >
+            <Typography
+              contentEditable={editMode}
+              suppressContentEditableWarning
+              onBlur={(e) =>
+                setFormData({
+                  ...formData,
+                  acercaDe: e.target.textContent.trim(),
+                })
               }
             >
-              <MenuItem value="Arial">Arial</MenuItem>
-              <MenuItem value="Georgia">Georgia</MenuItem>
-              <MenuItem value="Verdana">Verdana</MenuItem>
-              <MenuItem value="Tahoma">Tahoma</MenuItem>
-              <MenuItem value="Courier New">Courier New</MenuItem>
-            </Select>
-          </FormControl>
+              {acercaDe}
+            </Typography>
+          </Section>
 
-          {/* Font Size */}
-          <TextField
-            label="Tamaño de letra"
-            type="number"
-            fullWidth
-            value={formData.fontSize || 14}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, fontSize: Number(e.target.value) }))
-            }
-          />
+          {/* EDUCACIÓN */}
+          <Section title="Educación" editMode={editMode}>
+            {cleanEducacion.map((edu, i) => (
+              <Box key={i} sx={{ mb: 1 }}>
+                <Typography
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  onBlur={(e) =>
+                    updateArray("educacion", i, "titulo", e.target.textContent)
+                  }
+                  sx={{ fontWeight: 600 }}
+                >
+                  {edu.titulo}
+                </Typography>
+
+                <Typography
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  onBlur={(e) =>
+                    updateArray(
+                      "educacion",
+                      i,
+                      "institucion",
+                      e.target.textContent
+                    )
+                  }
+                >
+                  {edu.institucion}
+                </Typography>
+
+                <Typography
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  sx={{ fontSize: 13, color: "#666" }}
+                  onBlur={(e) =>
+                    updateArray("educacion", i, "periodo", e.target.textContent)
+                  }
+                >
+                  {edu.periodo}
+                </Typography>
+
+                {editMode && (
+                  <Button
+                    size="small"
+                    sx={{ color: "red", mt: 0.5 }}
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        educacion: cleanEducacion.filter((_, x) => x !== i),
+                      })
+                    }
+                  >
+                    Eliminar
+                  </Button>
+                )}
+              </Box>
+            ))}
+
+            {editMode && (
+              <Button
+                variant="outlined"
+                size="small"
+                sx={{ mt: 1 }}
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    educacion: [
+                      ...cleanEducacion,
+                      {
+                        titulo: "Nuevo título",
+                        institucion: "Nueva institución",
+                        periodo: "Periodo",
+                      },
+                    ],
+                  })
+                }
+              >
+                ➕ Agregar educación
+              </Button>
+            )}
+          </Section>
+
+          {/* HABILIDADES */}
+          <Section title="Habilidades">
+            {cleanHabilidades.length ? (
+              cleanHabilidades.map((h, i) => (
+                <Box
+                  key={i}
+                  sx={{
+                    display: "inline-block",
+                    background: "#eee",
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: "8px",
+                    m: 0.5,
+                  }}
+                >
+                  {h}
+
+                  {editMode && (
+                    <Button
+                      size="small"
+                      sx={{ color: "red", ml: 1 }}
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          habilidades: cleanHabilidades.filter(
+                            (_, x) => x !== i
+                          ),
+                        })
+                      }
+                    >
+                      x
+                    </Button>
+                  )}
+                </Box>
+              ))
+            ) : (
+              <Typography color="gray">Sin habilidades.</Typography>
+            )}
+
+            {editMode && (
+              <Button
+                variant="outlined"
+                size="small"
+                sx={{ mt: 1 }}
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    habilidades: [...cleanHabilidades, "Nueva habilidad"],
+                  })
+                }
+              >
+                ➕ Agregar habilidad
+              </Button>
+            )}
+          </Section>
+
+          {/* IDIOMAS */}
+          <Section title="Idiomas">
+            {cleanIdiomas.map((i, idx) => (
+              <Box key={idx} sx={{ mb: 1 }}>
+                <Typography
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  onBlur={(e) =>
+                    updateArray("idiomas", idx, "idioma", e.target.textContent)
+                  }
+                >
+                  {i.idioma}
+                </Typography>
+
+                <Typography
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  sx={{ fontSize: 12, color: "#666" }}
+                  onBlur={(e) =>
+                    updateArray("idiomas", idx, "nivel", e.target.textContent)
+                  }
+                >
+                  {i.nivel}
+                </Typography>
+
+                {editMode && (
+                  <Button
+                    size="small"
+                    sx={{ color: "red", mt: 0.5 }}
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        idiomas: cleanIdiomas.filter((_, x) => x !== idx),
+                      })
+                    }
+                  >
+                    Eliminar
+                  </Button>
+                )}
+              </Box>
+            ))}
+
+            {editMode && (
+              <Button
+                variant="outlined"
+                size="small"
+                sx={{ mt: 1 }}
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    idiomas: [
+                      ...cleanIdiomas,
+                      { idioma: "Nuevo idioma", nivel: "Nivel" },
+                    ],
+                  })
+                }
+              >
+                ➕ Agregar idioma
+              </Button>
+            )}
+          </Section>
         </Box>
-      </Drawer>
 
-      {/* BUTTONS */}
-      <Fade in>
-        <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 2 }}>
-          <Button variant="contained" onClick={handleDownloadPDF}>
-            Descargar CV
-          </Button>
-          <Button variant="outlined" onClick={handleSaveCV}>
-            Guardar en mi cuenta
-          </Button>
+        {/* RIGHT COLUMN — EXPERIENCIA */}
+        <Box>
+          <Section
+            title="Experiencia laboral"
+            editMode={editMode}
+            onAiClick={async () => {
+              const text = getExperienceText();
+              const suggestion = await onAiHelp?.(
+                "experiencia",
+                text || { sinExperiencia: true }
+              );
+              if (!suggestion) return;
+
+              const cleaned = cleanAIText(suggestion);
+              const paragraphs = cleaned
+                .split(/\n{2,}/)
+                .map((p) => p.trim())
+                .filter((p) => p.length > 20);
+
+              const parsed = paragraphs.map((p, idx) => ({
+                puesto: `Experiencia ${idx + 1}`,
+                periodo: "",
+                descripcion: p,
+              }));
+
+              setFormData((p) => ({ ...p, experiencia: parsed }));
+            }}
+          >
+            {!cleanExperiencia.length || cleanExperiencia[0]?.sinExperiencia ? (
+              <Typography color="gray">Sin experiencia laboral.</Typography>
+            ) : (
+              cleanExperiencia.map((exp, i) => (
+                <Box key={i} sx={{ mb: 2 }}>
+                  <Typography
+                    contentEditable={editMode}
+                    suppressContentEditableWarning
+                    sx={{ fontWeight: 600 }}
+                    onBlur={(e) =>
+                      updateArray("experiencia", i, "puesto", e.target.textContent)
+                    }
+                  >
+                    {exp.puesto}
+                  </Typography>
+
+                  <Typography
+                    contentEditable={editMode}
+                    suppressContentEditableWarning
+                    sx={{ fontSize: 13, color: "#666" }}
+                    onBlur={(e) =>
+                      updateArray("experiencia", i, "periodo", e.target.textContent)
+                    }
+                  >
+                    {exp.periodo}
+                  </Typography>
+
+                  <Typography
+                    contentEditable={editMode}
+                    suppressContentEditableWarning
+                    onBlur={(e) =>
+                      updateArray(
+                        "experiencia",
+                        i,
+                        "descripcion",
+                        e.target.textContent
+                      )
+                    }
+                  >
+                    {exp.descripcion}
+                  </Typography>
+                </Box>
+              ))
+            )}
+          </Section>
         </Box>
-      </Fade>
+      </Box>
+    </Box>
+  );
+}
 
-      {/* SAVED MESSAGE */}
-      {saved && (
-        <Typography sx={{ mt: 2, color: "green" }}>¡CV guardado con éxito!</Typography>
-      )}
+/* ============================================================
+   SECTION COMPONENT
+============================================================ */
+function Section({ title, children, editMode, onAiClick }) {
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography sx={{ fontSize: 16, fontWeight: 700, mb: 1 }}>
+        {title}
+      </Typography>
 
-      {/* AI LOADING */}
-      {loadingAI && (
-        <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(255,255,255,0.75)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
+      {editMode && onAiClick && (
+        <Button
+          variant="outlined"
+          size="small"
+          color="secondary"
+          startIcon={<AutoFixHighIcon />}
+          onClick={onAiClick}
+          sx={{ mb: 1 }}
         >
-          <Box sx={{ textAlign: "center" }}>
-            <CircularProgress size={70} />
-            <Typography sx={{ mt: 2 }}>Generando sugerencia con IA...</Typography>
-          </Box>
-        </Box>
+          AYUDA CON IA
+        </Button>
       )}
+
+      {children}
     </Box>
   );
 }
